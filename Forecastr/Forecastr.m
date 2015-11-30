@@ -170,6 +170,7 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
         // Caching defaults
         self.cacheEnabled = YES; // Enable cache by default
         self.cacheExpirationInMinutes = 30; // Set default of 30 minutes
+        self.requestHTTPCompression = YES; // Set default to YES for forecast.io
     }
     return self;
 }
@@ -231,6 +232,10 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
         // Asynchronously kick off the GET request on the API for the generated URL (i.e. not the one used as a cache key)
         if (callback) {
             
+            if (self.requestHTTPCompression) {
+                [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
+                [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+            }
             [ForecastrAPIClient sharedClient].responseSerializer = [AFHTTPResponseSerializer serializer];
             [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
                 NSString *JSONP = [[NSString alloc] initWithData:responseObject encoding:NSASCIIStringEncoding];
@@ -244,7 +249,10 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
             }];
             
         } else {
-            
+            if (self.requestHTTPCompression) {
+                [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
+                [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+            }
             [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id JSON) {
                 if (self.cacheEnabled) [self cacheForecast:JSON withURLString:cacheKey];
                 success(JSON);

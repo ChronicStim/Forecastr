@@ -134,6 +134,8 @@ extern NSString *const kFCNearestStormBearing;
 @property (nonatomic, assign) BOOL cacheEnabled; // Defaults to YES
 @property (nonatomic, assign) int cacheExpirationInMinutes; // Defaults to 30 mins
 
+@property (nonatomic, assign) BOOL requestHTTPCompression; // Defaults to YES
+
 /**
  * Initializes and returns a new Forecastr singleton object
  *
