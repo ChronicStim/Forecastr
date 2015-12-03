@@ -219,6 +219,9 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
     // Check if we have an API key set
     [self checkForAPIKey];
     
+    // If languageCode is NIL, but language property has been set, then use that in request
+    languageCode = (nil == languageCode) ? self.language : languageCode;
+    
     // Generate the URL string based on the passed in params
     NSString *urlString = [self urlStringforLatitude:lat longitude:lon time:time exclusions:exclusions extend:(NSString *)extendCommand language:languageCode];
     
