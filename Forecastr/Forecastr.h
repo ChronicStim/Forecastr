@@ -129,6 +129,7 @@ extern NSString *const kFCNearestStormBearing;
 
 @property (nonatomic, strong) NSString *apiKey;
 @property (nonatomic, strong) NSString *units; // Defaults to 'us'
+@property (nonatomic, strong) NSString *language; // Defaults to 'en'
 @property (nonatomic, strong) NSString *callback;
 
 @property (nonatomic, assign) BOOL cacheEnabled; // Defaults to YES

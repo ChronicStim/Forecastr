@@ -164,6 +164,10 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
         // Init code here
         userDefaults = [NSUserDefaults standardUserDefaults];
         
+        // Locale defaults
+        self.language = kFCLanguageEnglish;
+        self.units = kFCUSUnits;
+        
         // Setup the async queue
         async_queue = dispatch_queue_create("com.forecastr.asyncQueue", NULL);
         
@@ -171,6 +175,10 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
         self.cacheEnabled = YES; // Enable cache by default
         self.cacheExpirationInMinutes = 30; // Set default of 30 minutes
         self.requestHTTPCompression = YES; // Set default to YES for forecast.io
+        
+        // Setup KVO monitoring of key properties that effect when cache needs to be flushed
+        [self addObserver:self forKeyPath:@"language" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+        [self addObserver:self forKeyPath:@"units" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
     }
     return self;
 }
@@ -494,6 +502,23 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
 - (id)objectForArchive:(NSData *)archivedObject
 {
     return archivedObject ? [NSKeyedUnarchiver unarchiveObjectWithData:archivedObject] : nil;
+}
+
+#pragma mark - KVO Observing Methods
+
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context;
+{
+    NSArray *keyPaths = @[@"language",@"units"];
+    if ([keyPaths containsObject:keyPath]) {
+        // Check if the property has changed values. If so, the cache will need to be flushed to ensure incorrect data is not reported.
+        id oldValue = [change objectForKey:NSKeyValueChangeOldKey];
+        id newValue = [change objectForKey:NSKeyValueChangeNewKey];
+        BOOL flushCache = ![oldValue isEqual:newValue];
+        
+        if (flushCache) {
+            [self flushCache];
+        }
+    }
 }
 
 @end
