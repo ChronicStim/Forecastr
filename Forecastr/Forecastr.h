@@ -232,6 +232,13 @@ extern NSString *const kFCNearestStormBearing;
 - (NSString *)descriptionForPrecipIntensity:(float)precipIntensity;
 
 /**
+ * Returns a description based on the cloud cover percentage
+ *
+ * @param cloudCover The cloudCover percentage for the acquired forecast data
+ */
+- (NSString *)descriptionForCloudCoverPercentage:(float)cloudCover;
+
+/**
  * Returns an image name based on the weather icon type
  *
  * @param iconDescription The description of the weather icon for the acquired forecast data

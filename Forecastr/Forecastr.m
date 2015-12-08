@@ -296,6 +296,16 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
     else return @"Heavy";
 }
 
+// Returns a description based on the cloud cover percentage
+- (NSString *)descriptionForCloudCoverPercentage:(float)cloudCover
+{
+    if (cloudCover < 0.2) { return @"clear sky"; }
+    if (cloudCover < 0.4) { return @"widely scattered"; }
+    if (cloudCover < 0.6) { return @"partly cloudy"; }
+    if (cloudCover < 0.8) { return @"mostly cloudy"; }
+    else return @"overcast";
+}
+
 // Returns an image name based on the weather icon type
 - (NSString *)imageNameForWeatherIconType:(NSString *)iconDescription
 {
