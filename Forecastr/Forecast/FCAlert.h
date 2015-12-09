@@ -1,0 +1,20 @@
+//
+//  FCAlert.h
+//  PainTracker
+//
+//  Created by Wendy Kutschke on 12/9/15.
+//  Copyright © 2015 Chronic Stimulation, LLC. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "EasyMapping.h"
+
+@interface FCAlert : NSObject <EKMappingProtocol>
+
+@property (nonatomic, copy) NSString *alertDescription;
+@property (nonatomic, strong) NSDate *expires;
+@property (nonatomic, strong) NSDate *fcAlertDate;
+@property (nonatomic, copy) NSString *title;
+@property (nonatomic, strong) NSURL *url;
+
+@end
