@@ -8,6 +8,7 @@
 
 #import "FCForecast.h"
 #import "Forecastr+CLLocation.h"
+#import "FCForecastModel.h"
 
 @implementation FCForecast
 

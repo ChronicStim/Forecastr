@@ -8,15 +8,9 @@
 
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
-#import "FCAlert.h"
-#import "FCCurrently.h"
-#import "FCDaily.h"
-#import "FCHourly.h"
-#import "FCMinutely.h"
-#import "FCFlags.h"
 
+@class FCFlags, FCCurrently;
 @interface FCForecast : NSObject <EKMappingProtocol>
-
 
 @property (nonatomic, copy) NSString *jsonResponseString; // Optionally store the JSON response for later use
 @property (nonatomic, strong) NSDate* fcForecastDate; // Could either be manually set or default from the value in the FCCurrently object
@@ -39,5 +33,6 @@
 @property (nonatomic, strong) NSArray *minutelyForecasts;
 @property (nonatomic, copy) NSString* iconName; // Comes from the hourly section
 @property (nonatomic, copy) NSString* forecastSummary; // Comes from the hourly section
+
 
 @end

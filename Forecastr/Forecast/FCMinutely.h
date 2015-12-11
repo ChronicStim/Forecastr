@@ -9,11 +9,13 @@
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
 
+@class FCForecast;
 @interface FCMinutely : NSObject <EKMappingProtocol>
 
 @property (nonatomic, strong) NSNumber* precipIntensity;
 @property (nonatomic, strong) NSNumber* precipProbability;
 @property (nonatomic, copy) NSString* precipType;
 @property (nonatomic, strong) NSDate* fcMinutelyDate;
+@property (nonatomic, weak) FCForecast *forecast;
 
 @end

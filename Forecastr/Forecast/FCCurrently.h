@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
 
+@class FCForecast;
 @interface FCCurrently : NSObject <EKMappingProtocol>
 
 @property (nonatomic, strong) NSNumber* apparentTemperature;
@@ -28,5 +29,6 @@
 @property (nonatomic, strong) NSNumber* windSpeed;
 @property (nonatomic, strong) NSNumber* nearestStormDistance;
 @property (nonatomic, strong) NSNumber* nearestStormBearing;
+@property (nonatomic, weak) FCForecast *forecast;
 
 @end

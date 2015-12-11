@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
 
+@class FCForecast;
 @interface FCFlags : NSObject <EKMappingProtocol>
 
 @property (nonatomic, strong) id darkskyUnavailable;
@@ -21,5 +22,6 @@
 @property (nonatomic, strong) NSArray *madisStations;
 @property (nonatomic, strong) NSArray *sources;
 @property (nonatomic, copy) NSString *units;
+@property (nonatomic, weak) FCForecast *forecast;
 
 @end

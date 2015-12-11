@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
 
+@class FCForecast;
 @interface FCAlert : NSObject <EKMappingProtocol>
 
 @property (nonatomic, copy) NSString *alertDescription;
@@ -16,5 +17,6 @@
 @property (nonatomic, strong) NSDate *fcAlertDate;
 @property (nonatomic, copy) NSString *title;
 @property (nonatomic, strong) NSURL *url;
+@property (nonatomic, weak) FCForecast *forecast;
 
 @end
