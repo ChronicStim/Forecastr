@@ -12,5 +12,6 @@
 
 
 -(UIImage *)iconDaily;
+-(NSString *)moonPhaseDescription;
 
 @end
