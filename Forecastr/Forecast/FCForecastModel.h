@@ -21,3 +21,4 @@
 #import "FCHourly+Extras.h"
 //#import "FCMinutely+Extras.h"
 //#import "FCFlags+Extras.h"
+#import "FCForecastLocation.h"

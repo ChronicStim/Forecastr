@@ -40,6 +40,19 @@
     }];
 }
 
+-(instancetype)init;
+{
+    self = [super init];
+    if (self) {
+        
+        // Setup KVO monitoring of key properties that effect when FCForecastLocation object needs to be reset
+        [self addObserver:self forKeyPath:@"latitude" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+        [self addObserver:self forKeyPath:@"longitude" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+    }
+
+    return self;
+}
+
 -(NSDate *)fcForecastDate;
 {
     if (nil != _fcForecastDate) {
@@ -51,6 +64,50 @@
         _fcForecastDate = [self.currently.fcCurrentlyDate copy];
     }
     return _fcForecastDate;
+}
+
+-(void)dealloc;
+{
+    [self removeObserver:self forKeyPath:@"latitude"];
+    [self removeObserver:self forKeyPath:@"longitude"];
+}
+
+#pragma mark - FCForecastLocation methods
+
+-(FCForecastLocation *)forecastLocation;
+{
+    if (nil != _forecastLocation) {
+        return _forecastLocation;
+    }
+
+    _forecastLocation = [[FCForecastLocation alloc] initWithLatitude:self.latitude longitude:self.longitude forecast:self];
+
+    return _forecastLocation;
+}
+
+-(void)updateForecastLocationWithNewLatitude:(NSNumber *)newLatitude newLongitude:(NSNumber *)newLongitude;
+{
+    if (nil != newLatitude && nil != newLongitude) {
+        // This will update the Lat/Lon coord and will force the forecastLocation object to reverseGeocode the coord to derive a new CLPlacemark
+        [self.forecastLocation updateForecastLocationLatitude:newLatitude longitude:newLongitude];
+    }
+}
+
+#pragma mark - KVO Observing Methods
+
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context;
+{
+    NSArray *keyPaths = @[@"latitude",@"longitude"];
+    if ([keyPaths containsObject:keyPath]) {
+        // Check if the property has changed values. If so, the FCForecastLocation property will need to be updated to ensure incorrect data is not reported.
+        id oldValue = [change objectForKey:NSKeyValueChangeOldKey];
+        id newValue = [change objectForKey:NSKeyValueChangeNewKey];
+        BOOL resetLocation = ![oldValue isEqual:newValue];
+        
+        if (resetLocation) {
+            [self updateForecastLocationWithNewLatitude:self.latitude newLongitude:self.longitude];
+        }
+    }
 }
 
 @end

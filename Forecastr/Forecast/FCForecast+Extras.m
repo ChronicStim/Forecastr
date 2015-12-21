@@ -25,6 +25,7 @@
     
     self.currently.forecast = weakSelf;
     self.flags.forecast = weakSelf;
+    self.forecastLocation.forecast = weakSelf;
     
     for (FCDaily *daily in self.dailyForecasts) {
         daily.forecast = weakSelf;

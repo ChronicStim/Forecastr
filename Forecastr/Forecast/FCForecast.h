@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
 
-@class FCFlags, FCCurrently;
+@class FCFlags, FCCurrently, FCForecastLocation;
 @interface FCForecast : NSObject <EKMappingProtocol>
 
 @property (nonatomic, copy) NSString *jsonResponseString; // Optionally store the JSON response for later use
@@ -23,6 +23,7 @@
 @property (nonatomic, strong) NSNumber* longitude;
 @property (nonatomic, strong) NSNumber* offset;
 @property (nonatomic, copy) NSString* timezone;
+@property (nonatomic, strong) FCForecastLocation *forecastLocation;
 
 @property (nonatomic, strong) FCFlags *flags;
 @property (nonatomic, strong) NSArray *alerts;
