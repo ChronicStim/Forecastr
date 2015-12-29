@@ -23,5 +23,6 @@
 
 -(instancetype)initWithLatitude:(NSNumber *)latitude longitude:(NSNumber *)longitude forecast:(FCForecast *)forecast;
 -(void)updateForecastLocationLatitude:(NSNumber *)latitude longitude:(NSNumber *)longitude;
+- (void)reverseGeocodeForecastLocation;
 
 @end

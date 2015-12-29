@@ -59,13 +59,6 @@
     self.latitude = latitude;
     self.longitude = longitude;
     self.location = [[CLLocation alloc] initWithLatitude:[self.latitude doubleValue] longitude:[self.longitude doubleValue]];
-    
-    // Can only run the geocoding if both lat & lon are non-nil values
-    if (nil != self.latitude && nil != self.longitude) {
-
-        // Run the reverse Geocoding to get the address info
-        [self reverseGeocodeForecastLocation];
-    }
 }
 
 -(CLLocation *)location;
@@ -101,10 +94,11 @@
     }
     
     if (nil != self.location) {
+        FCForecastLocation __weak *blockSelf = self;
         [self.geocoder reverseGeocodeLocation:self.location
                         completionHandler:^(NSArray *placemarks, NSError *error) {
                             if (!error)
-                                [self processReverseGeocodingResults:placemarks];
+                                [blockSelf processReverseGeocodingResults:placemarks];
                         }];
     }
 }
@@ -121,6 +115,7 @@
     self.addressDisplayString = ABCreateStringWithAddressDictionary(self.placemark.addressDictionary, YES); // requires AddressBookUI framework
 
     self.locationDataIsReady = YES;
+    NSLog(@"ForecastLocation = %@",[self description]);
 }
 
 
