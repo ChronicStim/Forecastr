@@ -19,6 +19,7 @@
 @property (nonatomic, strong) CLGeocoder *geocoder;
 @property (nonatomic, strong) NSMutableArray *geocodingResults;
 @property (nonatomic, readwrite, assign) BOOL locationDataIsReady;
+@property (nonatomic, strong) NSDictionary *addressDictionary;
 
 @end
 
@@ -36,6 +37,22 @@
         NSAssert(nil != forecast,@"Forecast must not be nil");
         _forecast = forecast;
 
+        // Watch for a change in the placemark property and then update the addressDictionary property accordingly
+        [self bk_addObserverForKeyPath:@"placemark" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) task:^(id obj, NSDictionary *change) {
+            
+            CLPlacemark *oldPlacemark = (CLPlacemark *)[change objectForKey:NSKeyValueChangeOldKey];
+            CLPlacemark *newPlacemark = (CLPlacemark *)[change objectForKey:NSKeyValueChangeNewKey];
+            if ([oldPlacemark isEqual:newPlacemark]) {
+                return;
+            } else {
+                if (nil != newPlacemark) {
+                    [(FCForecastLocation *)obj setAddressDictionary:[newPlacemark addressDictionary]];
+                } else {
+                    [(FCForecastLocation *)obj setAddressDictionary:nil];
+                }
+            }
+        }];
+        
         if (nil != latitude && nil != longitude) {
             [self updateForecastLocationLatitude:latitude longitude:longitude];
         }
@@ -48,7 +65,6 @@
     // Invalidate existing location information
     self.locationDataIsReady = NO;
     self.placemark = nil;
-    self.addressDisplayString = nil;
     
     // Cancel any in-process geocoding since we're changing the location
     if ([self.geocoder isGeocoding]) {
@@ -76,7 +92,7 @@
 {
     if (self.forecast && self.location) {
         if (self.locationDataIsReady) {
-            return [NSString stringWithFormat:@"FCForecastLocation for FCForecast: %@ at location: %@ generated CLPlacemark: %@ (%@)",self.forecast,self.location,self.placemark,self.addressDisplayString];
+            return [NSString stringWithFormat:@"FCForecastLocation for FCForecast: %@ at location: %@ generated CLPlacemark: %@ (%@)",self.forecast,self.location,self.placemark,[self addressDisplayString]];
         } else {
             return [NSString stringWithFormat:@"FCForecastLocation for FCForecast: %@ at location: %@ has not generated geocoded placemark data yet.",self.forecast,self.location];
         }
@@ -85,9 +101,34 @@
     }
 }
 
+-(NSString *)addressDisplayString;
+{
+    NSString *addressString = nil;
+    if (nil != self.placemark) {
+        if (IOS_VERSION_GREATER_THAN_OR_EQUAL_TO(@"9.0")) {
+            // Post-iOS 9.0 need to use placemark components to build up address string manually
+            addressString = @"TODO";
+        } else {
+            // Pre-iOS 9.0 can use ABPerson function to create full address string from placemark
+            addressString = ABCreateStringWithAddressDictionary(self.placemark.addressDictionary, YES);
+        }
+    }
+    return addressString;
+}
+
+-(NSString *)addressComponentStringForAddrBookKey:(NSString *)abKey;
+{
+    NSString *componentString = nil;
+    if (nil != self.addressDictionary) {
+        componentString = [self.addressDictionary objectForKey:abKey];
+    }
+    
+    return componentString;
+}
+
 #pragma mark - Geocoding methods
 
-- (void)reverseGeocodeForecastLocation;
+- (void)reverseGeocodeForecastLocationWithCompletionHandler:(FCForecastLocationCompletionHandler)locationCompletionHandler;
 {
     if ([self.geocoder isGeocoding]) {
         [self.geocoder cancelGeocode];
@@ -97,8 +138,10 @@
         FCForecastLocation __weak *blockSelf = self;
         [self.geocoder reverseGeocodeLocation:self.location
                         completionHandler:^(NSArray *placemarks, NSError *error) {
-                            if (!error)
+                            if (!error) {
                                 [blockSelf processReverseGeocodingResults:placemarks];
+                            }
+                            locationCompletionHandler();
                         }];
     }
 }
@@ -111,8 +154,6 @@
     
     self.geocodingResults = [placemarks copy];
     self.placemark = (CLPlacemark *)[self.geocodingResults objectAtIndex:0];
-
-    self.addressDisplayString = ABCreateStringWithAddressDictionary(self.placemark.addressDictionary, YES); // requires AddressBookUI framework
 
     self.locationDataIsReady = YES;
     NSLog(@"ForecastLocation = %@",[self description]);

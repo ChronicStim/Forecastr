@@ -59,6 +59,8 @@
 		<string>m/s</string>
 		<key>uk</key>
 		<string>mph</string>
+		<key>ca</key>
+		<string>km/h</string>
 	</dict>
 </dict>
 </plist>

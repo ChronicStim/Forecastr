@@ -48,6 +48,15 @@
     return phaseDescription;
 }
 
+-(NSNumber *)humidityAsIntegerNumber;
+{
+    NSNumber *humidity = nil;
+    if (nil != self.humidity && (0.0f <= [self.humidity doubleValue] && 1.0f >= [self.humidity doubleValue])) {
+        humidity = [NSNumber numberWithDouble:(100.0f * [self.humidity doubleValue])];
+    }
+    return humidity;
+}
+
 #pragma mark - Pressure Trend methods
 
 -(NSNumber *)pressureTrend;
@@ -153,8 +162,8 @@
             FCHourly *hourlyForecast = (FCHourly *)obj;
             NSInteger conditionHour = (NSInteger)roundf(([hourlyForecast.fcHourlyDate timeIntervalSinceDate:currentForecastDate]/3600.0f));
             // y-value is the barometric pressure
-            NSNumber *pressure = [hourlyForecast.pressure copy];
-            CGPoint dataPoint = CGPointMake((float)conditionHour, [pressure floatValue]);
+            FCMeasurementPressure *pressure = [hourlyForecast.pressure copy];
+            CGPoint dataPoint = CGPointMake((float)conditionHour, [pressure.baseValue doubleValue]);
             [dataPointArray addObject:[NSValue valueWithCGPoint:dataPoint]];
         }];
     }

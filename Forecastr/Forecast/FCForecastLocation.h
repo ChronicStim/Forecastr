@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+typedef void (^FCForecastLocationCompletionHandler)();
+
 @class FCForecast;
 @interface FCForecastLocation : NSObject
 
@@ -18,11 +20,11 @@
 @property (nonatomic, readonly, strong) CLLocation *location;
 @property (nonatomic, strong) CLPlacemark *placemark;
 
-@property (nonatomic, strong) NSString *addressDisplayString;
-
 
 -(instancetype)initWithLatitude:(NSNumber *)latitude longitude:(NSNumber *)longitude forecast:(FCForecast *)forecast;
 -(void)updateForecastLocationLatitude:(NSNumber *)latitude longitude:(NSNumber *)longitude;
-- (void)reverseGeocodeForecastLocation;
+- (void)reverseGeocodeForecastLocationWithCompletionHandler:(FCForecastLocationCompletionHandler)locationCompletionHandler;
+
+-(NSString *)addressComponentStringForAddrBookKey:(NSString *)abKey;
 
 @end

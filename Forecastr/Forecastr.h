@@ -27,6 +27,16 @@
 
 // Updated to match the Forecast.io API as of December 20, 2013
 
+#define IOS_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+
+typedef enum {
+    kFCUnitsModeUndefined = 0,
+    kFCUnitsModeUS = 1,
+    kFCUnitsModeSI = 2,
+    kFCUnitsModeUK = 3,
+    kFCUnitsModeCA = 4
+} ForecastrUnitsMode;
+
 // Cache keys
 extern NSString *const kFCCacheKey;
 extern NSString *const kFCCacheArchiveKey;

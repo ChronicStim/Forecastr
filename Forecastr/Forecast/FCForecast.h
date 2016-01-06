@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
 
-@class FCFlags, FCCurrently, FCForecastLocation;
+@class FCFlags, FCCurrently, FCForecastLocation, FCDaily;
 @interface FCForecast : NSObject <EKMappingProtocol>
 
 @property (nonatomic, copy) NSString *jsonResponseString; // Optionally store the JSON response for later use
@@ -35,5 +35,6 @@
 @property (nonatomic, copy) NSString* iconName; // Comes from the hourly section
 @property (nonatomic, copy) NSString* forecastSummary; // Comes from the hourly section
 
+-(FCDaily *)todaysForecast;
 
 @end

@@ -7,6 +7,7 @@
 //
 
 #import "FCMinutely.h"
+#import "FCForecastModel.h"
 
 @implementation FCMinutely
 
@@ -15,7 +16,6 @@
     return [EKObjectMapping mappingForClass:self withBlock:^(EKObjectMapping *mapping) {
         
         [mapping mapPropertiesFromDictionary:@{
-                                               @"precipIntensity" : @"precipIntensity",
                                                @"precipProbability" : @"precipProbability",
                                                @"precipType" : @"precipType"
                                                }];
@@ -24,6 +24,13 @@
             return (NSDate *)[NSDate dateWithTimeIntervalSince1970:[value doubleValue]];
         } reverseBlock:^id(id value) {
             return [NSNumber numberWithDouble:[(NSDate *)value timeIntervalSince1970]];
+        }];
+        
+        ForecastrUnitsMode unitsMode = [FCFlags forecastrUnitsModeForUnitsModeString:[[Forecastr sharedManager] units]];
+        
+        [mapping mapKeyPath:@"precipIntensity" toProperty:@"precipIntensity" withValueBlock:^id(NSString *key, id value) {
+            FCMeasurementPrecipIntensity *newItem = [[FCMeasurementPrecipIntensity alloc] initMeasurement:@"precipIntensity" baseValue:[NSNumber numberWithDouble:[value doubleValue]] baseUnitsMode:unitsMode];
+            return newItem;
         }];
         
     }];

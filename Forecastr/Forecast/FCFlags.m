@@ -30,4 +30,50 @@
     }];
 }
 
+-(ForecastrUnitsMode)forecastrUnitsMode;
+{
+    return [FCFlags forecastrUnitsModeForUnitsModeString:self.units];
+}
+
++(ForecastrUnitsMode)forecastrUnitsModeForUnitsModeString:(NSString *)unitsModeString;
+{
+    ForecastrUnitsMode unitsMode = kFCUnitsModeUndefined;
+    
+    if ([unitsModeString isEqualToString:kFCUSUnits]) {
+        unitsMode = kFCUnitsModeUS;
+    }
+    else if ([unitsModeString isEqualToString:kFCSIUnits]) {
+        unitsMode = kFCUnitsModeSI;
+    }
+    else if ([unitsModeString isEqualToString:kFCUKUnits]) {
+        unitsMode = kFCUnitsModeUK;
+    }
+    else if ([unitsModeString isEqualToString:kFCCAUnits]) {
+        unitsMode = kFCUnitsModeCA;
+    }
+    return unitsMode;
+}
+
++(NSString *)unitsModeStringForUnitsMode:(ForecastrUnitsMode)unitsMode;
+{
+    NSString *unitsModeString = @"";
+    switch (unitsMode) {
+        case kFCUnitsModeUS:
+            unitsModeString = kFCUSUnits;
+            break;
+        case kFCUnitsModeSI:
+            unitsModeString = kFCSIUnits;
+            break;
+        case kFCUnitsModeUK:
+            unitsModeString = kFCUKUnits;
+            break;
+        case kFCUnitsModeCA:
+            unitsModeString = kFCCAUnits;
+            break;
+        default:
+            break;
+    }
+    return unitsModeString;
+}
+
 @end

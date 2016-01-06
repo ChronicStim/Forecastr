@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "EasyMapping.h"
+#import "Forecastr.h"
 
 @class FCForecast;
 @interface FCFlags : NSObject <EKMappingProtocol>
@@ -23,5 +24,10 @@
 @property (nonatomic, strong) NSArray *sources;
 @property (nonatomic, copy) NSString *units;
 @property (nonatomic, weak) FCForecast *forecast;
+
+-(ForecastrUnitsMode)forecastrUnitsMode;
+
++(ForecastrUnitsMode)forecastrUnitsModeForUnitsModeString:(NSString *)unitsModeString;
++(NSString *)unitsModeStringForUnitsMode:(ForecastrUnitsMode)unitsMode;
 
 @end

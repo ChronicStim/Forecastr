@@ -21,5 +21,6 @@ typedef enum {
 -(NSString *)moonPhaseDescription;
 -(NSNumber *)pressureTrend;
 -(NSString *)descriptionForPressureTrend:(ForecastPressureTrend)pressureTrend;
+-(NSNumber *)humidityAsIntegerNumber;
 
 @end

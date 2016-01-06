@@ -72,6 +72,14 @@
     [self removeObserver:self forKeyPath:@"longitude"];
 }
 
+-(FCDaily *)todaysForecast;
+{
+    if (nil != self.dailyForecasts) {
+        return (FCDaily *)[self.dailyForecasts objectAtIndex:0];
+    }
+    return nil;
+}
+
 #pragma mark - FCForecastLocation methods
 
 -(FCForecastLocation *)forecastLocation;
