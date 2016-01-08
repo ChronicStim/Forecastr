@@ -8,6 +8,7 @@
 
 #import "FCCurrently.h"
 #import "FCForecastModel.h"
+#import "Forecastr+Icons.h"
 
 @implementation FCCurrently
 
@@ -31,7 +32,7 @@
         } reverseBlock:^id(id value) {
             return [NSNumber numberWithDouble:[(NSDate *)value timeIntervalSince1970]];
         }];
-
+        
         ForecastrUnitsMode unitsMode = [FCFlags forecastrUnitsModeForUnitsModeString:[[Forecastr sharedManager] units]];
         
         [mapping mapKeyPath:@"apparentTemperature" toProperty:@"apparentTemperature" withValueBlock:^id(NSString *key, id value) {

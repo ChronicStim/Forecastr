@@ -13,5 +13,6 @@
 
 -(UIImage *)iconDaily;
 -(NSString *)moonPhaseDescription;
+-(BOOL)isTheIndicatedTimeDuringTheDay:(NSDate *)timeToTest;
 
 @end

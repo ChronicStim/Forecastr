@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "idiom" : "universal",
+      "filename" : "FCIcon_partly_cloudy.png",
+      "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "filename" : "FCIcon_partly_cloudy@2x.png",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}

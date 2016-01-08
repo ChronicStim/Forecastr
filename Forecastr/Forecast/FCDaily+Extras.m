@@ -18,9 +18,15 @@
     UIImage *iconImage = nil;
     if (nil != self.iconName) {
         BOOL useDaytimeImage = [self.forecast.currently isItDaytime];
-        iconImage = [[Forecastr sharedManager] iconImageForIconName:self.iconName daytime:useDaytimeImage imageSize:kForecastrIconsDefaultIconSize];
+        iconImage = [[Forecastr sharedManager] iconImageForIconName:self.iconName daytime:useDaytimeImage imageSize:kForecastrIconsDefaultIconSize scale:0];
     }
     return iconImage;
+}
+
+-(BOOL)isTheIndicatedTimeDuringTheDay:(NSDate *)timeToTest;
+{
+    BOOL daytime = ((timeToTest == [timeToTest earlierDate:self.sunriseTime]) || (timeToTest == [timeToTest laterDate:self.sunsetTime]));
+    return daytime;
 }
 
 -(NSString *)moonPhaseDescription;

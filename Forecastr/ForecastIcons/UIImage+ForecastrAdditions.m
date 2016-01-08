@@ -10,9 +10,18 @@
 
 @implementation UIImage (ForecastrAdditions)
 
-+ (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize;
++ (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize scale:(CGFloat)scale;
 {
-    CGRect newRect = CGRectIntegral(CGRectMake(0, 0, newSize.width, newSize.height));
+    if (nil == image || CGSizeEqualToSize(newSize, CGSizeZero)) {
+        return nil;
+    }
+    
+    if (0 == scale) {
+        // Use same scale factor as input image
+        scale = [image scale];
+    }
+    
+    CGRect newRect = CGRectIntegral(CGRectMake(0, 0, newSize.width*scale, newSize.height*scale));
     CGImageRef imageRef = image.CGImage;
     
     // Build a context that's the same dimensions as the new size
@@ -32,7 +41,7 @@
     
     // Get the resized image from the context and a UIImage
     CGImageRef newImageRef = CGBitmapContextCreateImage(bitmap);
-    UIImage *newImage = [UIImage imageWithCGImage:newImageRef];
+    UIImage *newImage = [UIImage imageWithCGImage:newImageRef scale:scale orientation:UIImageOrientationUp];
     
     // Clean up
     CGContextRelease(bitmap);

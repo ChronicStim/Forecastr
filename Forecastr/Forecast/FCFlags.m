@@ -8,6 +8,12 @@
 
 #import "FCFlags.h"
 
+@interface FCFlags ()
+
+
+@end
+
+
 @implementation FCFlags
 
 +(EKObjectMapping *)objectMapping;
@@ -26,13 +32,7 @@
                                                @"sources" : @"sources",
                                                @"units" : @"units"
                                                }];
-        
     }];
-}
-
--(ForecastrUnitsMode)forecastrUnitsMode;
-{
-    return [FCFlags forecastrUnitsModeForUnitsModeString:self.units];
 }
 
 +(ForecastrUnitsMode)forecastrUnitsModeForUnitsModeString:(NSString *)unitsModeString;
@@ -74,6 +74,13 @@
             break;
     }
     return unitsModeString;
+}
+
+#pragma mark -
+
+-(ForecastrUnitsMode)forecastrUnitsMode;
+{
+    return [FCFlags forecastrUnitsModeForUnitsModeString:self.units];
 }
 
 @end

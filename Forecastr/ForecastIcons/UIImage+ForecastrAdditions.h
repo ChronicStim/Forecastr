@@ -10,6 +10,6 @@
 
 @interface UIImage (ForecastrAdditions)
 
-+ (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize;
++ (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize scale:(CGFloat)scale;
 
 @end

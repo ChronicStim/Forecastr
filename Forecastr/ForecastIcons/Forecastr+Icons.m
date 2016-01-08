@@ -8,12 +8,18 @@
 
 #import "Forecastr+Icons.h"
 #import "UIImage+ForecastrAdditions.h"
+#import "FCForecastModel.h"
 
 @implementation Forecastr (Icons)
 
--(UIImage *)iconImageForIconName:(NSString *)iconName daytime:(BOOL)daytime imageSize:(CGSize)imageSize;
+-(BOOL)checkIfForecastrIconPrefixExistsOnIconName:(NSString *)iconName;
 {
-    if (nil == iconName || CGSizeEqualToSize(imageSize, CGSizeZero)) {
+    return [iconName hasPrefix:kForecastrIconFilenamePrefix];
+}
+
+-(NSString *)refinedIconImageFilenameFromIconName:(NSString *)iconName daytime:(BOOL)daytime;
+{
+    if (nil == iconName) {
         return nil;
     }
     
@@ -38,12 +44,35 @@
     
     // Get the appropriate day/night image from the definition
     NSString *imageFilename = [iconDefinition objectForKey:dayNightKey];
+
+    if (nil != imageFilename) {
+        // e.g. "FCIcon_partly-cloudy-day"
+        return [NSString stringWithFormat:@"%@%@",kForecastrIconFilenamePrefix,imageFilename];
+    }
+    return nil;
+}
+
+-(UIImage *)iconImageForIconName:(NSString *)iconName daytime:(BOOL)daytime imageSize:(CGSize)imageSize scale:(CGFloat)scale;
+{
+    if (nil == iconName || CGSizeEqualToSize(imageSize, CGSizeZero)) {
+        return nil;
+    }
+    
+    // Get the appropriate day/night image from the definition
+    NSString *imageFilename = [self refinedIconImageFilenameFromIconName:iconName daytime:daytime];
     
     // Generate the image and scale to size
+    UIImage *iconImage = [self iconForFilename:imageFilename size:imageSize scale:scale];
+    return iconImage;
+}
+
+-(UIImage *)iconForFilename:(NSString *)iconFilename size:(CGSize)iconSize scale:(CGFloat)scale;
+{
     UIImage *iconImage = nil;
-    if (nil != imageFilename) {
-        UIImage *rawIconFile = [UIImage imageNamed:imageFilename];
-        iconImage = [UIImage imageWithImage:rawIconFile scaledToSize:imageSize];
+    if (nil != iconFilename) {
+        // Generate the image and scale to size
+        UIImage *rawIcon = [UIImage imageNamed:iconFilename];
+        iconImage = [UIImage imageWithImage:rawIcon scaledToSize:iconSize scale:scale];
     }
     return iconImage;
 }

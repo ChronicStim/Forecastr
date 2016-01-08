@@ -12,5 +12,6 @@
 
 -(void)buildWeakRelationshipsFromChildObjects;
 -(UIImage *)iconForecast;
+-(void)mapIconNameToForecastrIconFilenames;
 
 @end

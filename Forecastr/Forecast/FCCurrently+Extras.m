@@ -33,7 +33,7 @@
     UIImage *iconImage = nil;
     if (nil != self.iconName) {
         BOOL useDaytimeImage = [self isItDaytime];
-        iconImage = [[Forecastr sharedManager] iconImageForIconName:self.iconName daytime:useDaytimeImage imageSize:kForecastrIconsDefaultIconSize];
+        iconImage = [[Forecastr sharedManager] iconImageForIconName:self.iconName daytime:useDaytimeImage imageSize:kForecastrIconsDefaultIconSize scale:0];
     }
     return iconImage;
 }

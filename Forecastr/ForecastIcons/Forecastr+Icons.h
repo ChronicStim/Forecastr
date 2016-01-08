@@ -9,9 +9,15 @@
 #import "Forecastr.h"
 
 #define kForecastrIconsDefaultIconSize CGSizeMake(64,64)
+#define kForecastrIconFilenamePrefix @"FCIcon_"
 
+@class FCForecast;
 @interface Forecastr (Icons)
 
--(UIImage *)iconImageForIconName:(NSString *)iconName daytime:(BOOL)daytime imageSize:(CGSize)imageSize;
+-(NSString *)refinedIconImageFilenameFromIconName:(NSString *)iconName daytime:(BOOL)daytime;
+
+-(UIImage *)iconImageForIconName:(NSString *)iconName daytime:(BOOL)daytime imageSize:(CGSize)imageSize scale:(CGFloat)scale;
+
+-(UIImage *)iconForFilename:(NSString *)iconFilename size:(CGSize)iconSize scale:(CGFloat)scale;
 
 @end

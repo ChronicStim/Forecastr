@@ -27,8 +27,6 @@
         
         [mapping hasOne:[FCFlags class] forKeyPath:@"flags" forProperty:@"flags"];
         
-        [mapping hasOne:[FCCurrently class] forKeyPath:@"currently" forProperty:@"currently"];
-        
         [mapping hasMany:[FCAlert class] forKeyPath:@"alerts" forProperty:@"alerts"];
         
         [mapping hasMany:[FCDaily class] forKeyPath:@"daily.data" forProperty:@"dailyForecasts"];
@@ -36,6 +34,8 @@
         [mapping hasMany:[FCHourly class] forKeyPath:@"hourly.data" forProperty:@"hourlyForecasts"];
         
         [mapping hasMany:[FCMinutely class] forKeyPath:@"minutely.data" forProperty:@"minutelyForecasts"];
+        
+        [mapping hasOne:[FCCurrently class] forKeyPath:@"currently" forProperty:@"currently"];
         
     }];
 }
