@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>nearestStormDistance</key>
+	<dict>
+		<key>us</key>
+		<string>miles</string>
+		<key>si</key>
+		<string>km</string>
+		<key>uk2</key>
+		<string>miles</string>
+	</dict>
 	<key>precipAccumulation</key>
 	<dict>
 		<key>us</key>
@@ -50,6 +59,8 @@
 		<string>miles</string>
 		<key>si</key>
 		<string>km</string>
+		<key>uk2</key>
+		<string>miles</string>
 	</dict>
 	<key>windSpeed</key>
 	<dict>
@@ -57,7 +68,7 @@
 		<string>mph</string>
 		<key>si</key>
 		<string>m/s</string>
-		<key>uk</key>
+		<key>uk2</key>
 		<string>mph</string>
 		<key>ca</key>
 		<string>km/h</string>

@@ -19,14 +19,13 @@
     
     // To be customized for each subclass
     switch (unitsMode) {
-        case kFCUnitsModeUS:
-        case kFCUnitsModeUK: {
+        case kFCUnitsModeUS: {
             switch (self.baseUnitsMode) {
-                case kFCUnitsModeUS:
-                case kFCUnitsModeUK: {
+                case kFCUnitsModeUS: {
                     // mb to mb
                     measurementValue = [self.baseValue copy];
                 }   break;
+                case kFCUnitsModeUK:
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // hPa to mb
@@ -38,15 +37,16 @@
             }
         }  break;
             
+        case kFCUnitsModeUK:
         case kFCUnitsModeSI:
         case kFCUnitsModeCA: {
             switch (self.baseUnitsMode) {
-                case kFCUnitsModeUK:
                 case kFCUnitsModeUS: {
                     // mb to hPa
                     double convertedValue = [self hectoPascalFromMilliBar:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
+                case kFCUnitsModeUK:
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // hPa to hPa
@@ -69,12 +69,12 @@
     NSString *formatString = nil;
     
     switch (unitsMode) {
+        case kFCUnitsModeUK:
         case kFCUnitsModeCA:
         case kFCUnitsModeSI:  {
             formatString = @"%.0f %@";
         }   break;
-        case kFCUnitsModeUS:
-        case kFCUnitsModeUK:  {
+        case kFCUnitsModeUS:  {
             formatString = @"%.0f %@";
         }   break;
         case kFCUnitsModeUndefined:

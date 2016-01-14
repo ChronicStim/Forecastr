@@ -61,7 +61,7 @@
         }];
         
         [mapping mapKeyPath:@"nearestStormDistance" toProperty:@"nearestStormDistance" withValueBlock:^id(NSString *key, id value) {
-            FCMeasurementDistance *newItem = [[FCMeasurementDistance alloc] initMeasurement:@"visibility" baseValue:[NSNumber numberWithDouble:[value doubleValue]] baseUnitsMode:unitsMode];
+            FCMeasurementDistance *newItem = [[FCMeasurementDistance alloc] initMeasurement:@"nearestStormDistance" baseValue:[NSNumber numberWithDouble:[value doubleValue]] baseUnitsMode:unitsMode];
             return newItem;
         }];
         

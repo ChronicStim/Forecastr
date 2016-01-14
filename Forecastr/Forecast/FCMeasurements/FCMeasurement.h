@@ -19,13 +19,28 @@
 -(NSNumber *)valueWithUnitsMode:(ForecastrUnitsMode)unitsMode;
 -(NSString *)displayStringWithUnitsMode:(ForecastrUnitsMode)unitsMode;
 
+// Temperature
 -(double)degreesFahrenheitFromCelsius:(double)c;
 -(double)degreesCelsiusFromFahrenheit:(double)f;
+
+// Distance
 -(double)milesFromKilometers:(double)km;
 -(double)kilometersFromMiles:(double)miles;
--(double)milliBarsFromHectoPascal:(double)hPa;
--(double)hectoPascalFromMilliBar:(double)mb;
 -(double)millimetersFromInches:(double)inches;
 -(double)inchesFromMillimeters:(double)mm;
+-(double)centimetersFromInches:(double)inches;
+-(double)inchesFromCentimeters:(double)cm;
+
+// Pressure
+-(double)milliBarsFromHectoPascal:(double)hPa;
+-(double)hectoPascalFromMilliBar:(double)mb;
+
+// Speed
+-(double)milesPerHourFromMetersPerSecond:(double)metersPerSec;
+-(double)metersPerSecondFromMilesPerHour:(double)mph;
+-(double)kilometersPerHourFromMilesPerHour:(double)mph;
+-(double)milesPerHourFromKilometersPerHour:(double)kph;
+-(double)kilometersPerHourFromMetersPerSecond:(double)metersPerSec;
+-(double)metersPerSecondFromKilometersPerHour:(double)kph;
 
 @end

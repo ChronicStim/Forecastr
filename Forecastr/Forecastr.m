@@ -48,7 +48,7 @@ NSString *const kFCCacheJSONPKey = @"JSONP";
 // Unit types
 NSString *const kFCUSUnits = @"us";
 NSString *const kFCSIUnits = @"si";
-NSString *const kFCUKUnits = @"uk";
+NSString *const kFCUKUnits = @"uk2";
 NSString *const kFCCAUnits = @"ca";
 NSString *const kFCAutoUnits = @"auto";
 

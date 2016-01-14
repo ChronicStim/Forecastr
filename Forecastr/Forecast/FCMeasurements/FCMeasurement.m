@@ -109,14 +109,13 @@
 
     // To be customized for each subclass (eg shown is for Temp conversion)
     switch (unitsMode) {
-        case kFCUnitsModeUS:
-        case kFCUnitsModeUK: {
+        case kFCUnitsModeUS: {
             switch (self.baseUnitsMode) {
-                case kFCUnitsModeUK:
                 case kFCUnitsModeUS: {
                     // F to F
                     measurementValue = [self.baseValue copy];
                 }   break;
+                case kFCUnitsModeUK:
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // C to F
@@ -127,14 +126,15 @@
             }
         }  break;
             
+        case kFCUnitsModeUK:
         case kFCUnitsModeSI:
         case kFCUnitsModeCA: {
             switch (self.baseUnitsMode) {
-                case kFCUnitsModeUK:
                 case kFCUnitsModeUS: {
                     // F to C
                     measurementValue = [NSNumber numberWithFloat:[self degreesCelsiusFromFahrenheit:[self.baseValue floatValue]]];
                 }   break;
+                case kFCUnitsModeUK:
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // C to C
@@ -183,6 +183,8 @@
 
 #pragma Object Specific Conversion Methods
 
+#pragma mark - Temperature
+
 -(double)degreesFahrenheitFromCelsius:(double)c;
 {
     return ((c * 9.0f / 5.0f) + 32.0f);
@@ -192,6 +194,8 @@
 {
     return ((f -32.0f) * 5.0f / 9.0f);
 }
+
+#pragma mark - Distance
 
 -(double)milesFromKilometers:(double)km;
 {
@@ -203,6 +207,28 @@
     return (miles * 1.60934f);
 }
 
+-(double)millimetersFromInches:(double)inches;
+{
+    return (inches * 25.4f);
+}
+
+-(double)inchesFromMillimeters:(double)mm;
+{
+    return (mm / 25.4f);
+}
+
+-(double)centimetersFromInches:(double)inches;
+{
+    return ((inches * 25.4f) / 10.0f);
+}
+
+-(double)inchesFromCentimeters:(double)cm;
+{
+    return ((cm * 10.0f) / 25.4f);
+}
+
+#pragma mark - Pressure
+
 -(double)milliBarsFromHectoPascal:(double)hPa;
 {
     return (hPa * 1.0f);
@@ -213,14 +239,36 @@
     return (mb * 1.0f);
 }
 
--(double)millimetersFromInches:(double)inches;
+#pragma mark - Speed
+
+-(double)milesPerHourFromMetersPerSecond:(double)metersPerSec;
 {
-    return (inches * 25.4f);
+    return ([self milesFromKilometers:(metersPerSec / 1000.0f)] * 3600.0f);
 }
 
--(double)inchesFromMillimeters:(double)mm;
+-(double)metersPerSecondFromMilesPerHour:(double)mph;
 {
-    return (mm / 25.4f);
+    return (([self kilometersFromMiles:mph] * 1000.0f) / 3600.0f);
+}
+
+-(double)kilometersPerHourFromMilesPerHour:(double)mph;
+{
+    return [self kilometersFromMiles:mph];
+}
+
+-(double)milesPerHourFromKilometersPerHour:(double)kph;
+{
+    return [self milesFromKilometers:kph];
+}
+
+-(double)kilometersPerHourFromMetersPerSecond:(double)metersPerSec;
+{
+    return ((metersPerSec * 3600.0f) / 1000.0f);
+}
+
+-(double)metersPerSecondFromKilometersPerHour:(double)kph;
+{
+    return ((kph * 1000.0f) / 3600.0f);
 }
 
 @end

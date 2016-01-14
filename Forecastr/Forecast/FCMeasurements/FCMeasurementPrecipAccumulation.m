@@ -19,18 +19,17 @@
     
     // To be customized for each subclass
     switch (unitsMode) {
-        case kFCUnitsModeUS:
-        case kFCUnitsModeUK: {
+        case kFCUnitsModeUS: {
             switch (self.baseUnitsMode) {
-                case kFCUnitsModeUK:
                 case kFCUnitsModeUS: {
                     // in to in
                     measurementValue = [self.baseValue copy];
                 }   break;
+                case kFCUnitsModeUK:
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // cm to in
-                    double convertedValue = [self inchesFromMillimeters:([self.baseValue doubleValue] * 10.0f)];
+                    double convertedValue = [self inchesFromCentimeters:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 default:
@@ -38,15 +37,16 @@
             }
         }  break;
             
+        case kFCUnitsModeUK:
         case kFCUnitsModeSI:
         case kFCUnitsModeCA: {
             switch (self.baseUnitsMode) {
-                case kFCUnitsModeUK:
                 case kFCUnitsModeUS: {
                     // in to cm
-                    double convertedValue = ([self millimetersFromInches:[self.baseValue doubleValue]] / 10.0f);
+                    double convertedValue = [self centimetersFromInches:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
+                case kFCUnitsModeUK:
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // cm to cm

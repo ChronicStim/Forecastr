@@ -19,7 +19,31 @@
     
     // To be customized for each subclass
     switch (unitsMode) {
-        case kFCUnitsModeUS:
+        case kFCUnitsModeUS: {
+            switch (self.baseUnitsMode) {
+                case kFCUnitsModeUS: {
+                    // mph to mph
+                    measurementValue = [self.baseValue copy];
+                }   break;
+                case kFCUnitsModeUK: {
+                    // mph to mph
+                    measurementValue = [self.baseValue copy];
+                }   break;
+                case kFCUnitsModeSI: {
+                    // m/s to mph
+                    double convertedValue = [self milesPerHourFromMetersPerSecond:[self.baseValue doubleValue]];
+                    measurementValue = [NSNumber numberWithDouble:convertedValue];
+                }   break;
+                case kFCUnitsModeCA: {
+                    // km/hr to mph
+                    double convertedValue = [self milesPerHourFromKilometersPerHour:[self.baseValue doubleValue]];
+                    measurementValue = [NSNumber numberWithDouble:convertedValue];
+                }   break;
+                default:
+                    break;
+            }
+        }  break;
+            
         case kFCUnitsModeUK: {
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUS: {
@@ -32,12 +56,12 @@
                 }   break;
                 case kFCUnitsModeSI: {
                     // m/s to mph
-                    double convertedValue = ([self milesFromKilometers:[self.baseValue doubleValue]] / 60.0f);
+                    double convertedValue = [self milesPerHourFromMetersPerSecond:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeCA: {
                     // km/hr to mph
-                    double convertedValue = [self milesFromKilometers:[self.baseValue doubleValue]];
+                    double convertedValue = [self milesPerHourFromKilometersPerHour:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 default:
@@ -49,12 +73,12 @@
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUK: {
                     // mph to m/s
-                    double convertedValue = ([self kilometersFromMiles:[self.baseValue doubleValue]] * 60.0f);
+                    double convertedValue = [self metersPerSecondFromMilesPerHour:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeUS: {
                     // mph to m/s
-                    double convertedValue = ([self kilometersFromMiles:[self.baseValue doubleValue]] * 60.0f);
+                    double convertedValue = [self metersPerSecondFromMilesPerHour:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeSI: {
@@ -63,7 +87,7 @@
                 }   break;
                 case kFCUnitsModeCA: {
                     // km/hr to m/s
-                    double convertedValue = (([self.baseValue doubleValue] * 1000.0f) / 3600.0f);
+                    double convertedValue = [self metersPerSecondFromKilometersPerHour:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 default:
@@ -75,17 +99,17 @@
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUK: {
                     // mph to km/hr
-                    double convertedValue = [self kilometersFromMiles:[self.baseValue doubleValue]];
+                    double convertedValue = [self kilometersPerHourFromMilesPerHour:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeUS: {
                     // mph to km/hr
-                    double convertedValue = [self kilometersFromMiles:[self.baseValue doubleValue]];
+                    double convertedValue = [self kilometersPerHourFromMilesPerHour:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeSI: {
                     // m/s to km/hr
-                    double convertedValue = (([self.baseValue doubleValue] * 3600.0f) / 1000.0f);
+                    double convertedValue = [self kilometersPerHourFromMetersPerSecond:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeCA: {

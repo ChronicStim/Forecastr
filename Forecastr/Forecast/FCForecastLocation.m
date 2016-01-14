@@ -156,7 +156,7 @@
     self.placemark = (CLPlacemark *)[self.geocodingResults objectAtIndex:0];
 
     self.locationDataIsReady = YES;
-    NSLog(@"ForecastLocation = %@",[self description]);
+    //NSLog(@"ForecastLocation = %@",[self description]);
 }
 
 

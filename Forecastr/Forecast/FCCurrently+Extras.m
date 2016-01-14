@@ -10,8 +10,12 @@
 #import "Forecastr+Icons.h"
 #import "FCForecastModel.h"
 
-@implementation FCCurrently (Extras)
+#define kFCCurrentlyPressureDataPointHourlyDate @"kFCCurrentlyPressureDataPointHourlyDate"
+#define kFCCurrentlyPressureDataPointPressure @"kFCCurrentlyPressureDataPointPressure"
+#define kFCCurrentlyPressureDataPointHourIndex @"kFCCurrentlyPressureDataPointHourIndex"
+#define kFCCurrentlyPressureDataPointABSHourIndex @"kFCCurrentlyPressureDataPointABSHourIndex"
 
+@implementation FCCurrently (Extras)
 
 -(BOOL)isItDaytime;
 {
@@ -23,7 +27,9 @@
         NSDate *sunset = daily.sunsetTime;
         NSDate *current = self.fcCurrentlyDate;
         
-        daytime = ((current == [current earlierDate:sunrise]) || (current == [current laterDate:sunset]));
+        if ([current compare:sunrise] == NSOrderedAscending || [current compare:sunset] == NSOrderedDescending) {
+            daytime = NO;
+        }
     }
     return daytime;
 }
@@ -65,65 +71,60 @@
     NSArray *dataPointArray = [self getArrayOfHourlyPressureDataPoints];
     
     if (nil != dataPointArray) {
-        // Reduce dataPointArray to most recent data (+- 1 hr)
-        NSPredicate *shortPredicate = [NSPredicate predicateWithBlock:^BOOL(id  _Nonnull evaluatedObject, NSDictionary<NSString *,id> * _Nullable bindings) {
-            NSValue *valuePoint = (NSValue *)evaluatedObject;
-            CGPoint dataPoint = [valuePoint CGPointValue];
-            if (fabsf(dataPoint.x) > 1) {
-                return NO;
-            }
-            return YES;
-        }];
-        NSArray *shortTermDataArray = [dataPointArray filteredArrayUsingPredicate:shortPredicate];
+        // We only want to evaluate the points closest to the hour of fcCurrentDate, so need to reduce the array to the two pressure points just above and below the fcCurrentDate. Can use the hourIndex value (with an ABS() func) to sort the array items and the hourDate as a secondary sort to ensure we keep the right order of data points
+        NSSortDescriptor *sortDescriptorABSHourIndex = [[NSSortDescriptor alloc] initWithKey:kFCCurrentlyPressureDataPointABSHourIndex ascending:YES];
+        NSSortDescriptor *sortDescriptorHourDate = [[NSSortDescriptor alloc] initWithKey:kFCCurrentlyPressureDataPointHourlyDate ascending:YES];
+        NSArray *sortDescriptors = @[sortDescriptorABSHourIndex, sortDescriptorHourDate];
+        NSArray *sortedDataPointArray = [dataPointArray sortedArrayUsingDescriptors:sortDescriptors];
         
-        // Determine the pressure delta from one point to the next for the one or two data points that are closest to the current forecast time. These will be the ones with the "0" values for the point.x value
-        int itemCount = [shortTermDataArray count];
-        NSMutableArray __block *pressureDeltaArray = [NSMutableArray new];
-        
-        NSArray *dataArray = [shortTermDataArray copy];
-        [shortTermDataArray enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            
-            NSValue *dataPointValue = (NSValue *)obj;
-            CGPoint dataPoint = [dataPointValue CGPointValue];
-            double pressureDelta;
-            
-            // We only want to evaluate the points where x-value is zero (data points within 1 hour of fcCurrentDate)
-            if (0 == (int)dataPoint.x) {
-                
-                if (0 == idx && 0 < itemCount) {
-                    // item is first object in multi-item array
-                    NSValue *comparisonPointValue = (NSValue *)[dataArray objectAtIndex:(idx + 1)];
-                    CGPoint comparisonPoint = [comparisonPointValue CGPointValue];
-                    pressureDelta = (comparisonPoint.y - dataPoint.y);
-                    [pressureDeltaArray addObject:[NSNumber numberWithDouble:pressureDelta]];
-                }
-                else if (0 < idx) {
-                    // item is any object other than the first object
-                    NSValue *comparisonPointValue = (NSValue *)[dataArray objectAtIndex:(idx - 1)];
-                    CGPoint comparisonPoint = [comparisonPointValue CGPointValue];
-                    pressureDelta = (dataPoint.y - comparisonPoint.y);
-                    [pressureDeltaArray addObject:[NSNumber numberWithDouble:pressureDelta]];
-                }
-                
-            }
-        }];
-        
-        if (0 == [pressureDeltaArray count]) {
+        if (2 >= [sortedDataPointArray count]) {
+            NSLog(@"Not enough data points to determine pressure trend. Available data points = %@",sortedDataPointArray);
             return nil;
         }
         
-        // The latter value in the pressureDeltaArray will represent the pressure delta for the time period that best corresponds to the current time period. So, we'll take that as the comparison point to determine the trend direction.
-        double currentTrend = [[pressureDeltaArray lastObject] doubleValue];
+        // Now take just the first two items. The following are the 3 possible combinations that could arise depending on where in the 24 hour period the fcCurrentDate falls (bc the Hourly data is only supplied for a fixed 24 hour period each day, not +-12 hours from the fcCurrentDate)
+        // Examples use {hourIndex, pressureInMillibar}
+        // (A) {0, 1023.61}, {1, 1023.3}    fcCurrentDate falls in the first hour block
+        // (B) {0, 1023.42}, {0, 1023.61}
+        // (C) {-1, 1023.3}, {0, 1023.42}   fcCurrentDate falls in the last hour block
+        NSMutableArray *shortTermDataArray = [NSMutableArray new];
+        [shortTermDataArray addObject:[sortedDataPointArray objectAtIndex:0]];
+        [shortTermDataArray addObject:[sortedDataPointArray objectAtIndex:1]];
+        // Sort one more time, this time on hourDate only to ensure that case (c) has the correct data point first.
+        [shortTermDataArray sortUsingDescriptors:@[sortDescriptorHourDate]];
+        
+        // Determine the pressure delta between the two points
+        NSDictionary *dataPointZeroDict = [shortTermDataArray objectAtIndex:0];
+        NSDictionary *dataPointOneDict = [shortTermDataArray objectAtIndex:1];
+        
+        FCMeasurementPressure *pressureZero, *pressureOne;
+        double pressureZeroMb, pressureOneMb;
+        NSDate *hourDateZero, *hourDateOne;
+        
+        pressureZero = [dataPointZeroDict objectForKey:kFCCurrentlyPressureDataPointPressure];
+        pressureOne = [dataPointOneDict objectForKey:kFCCurrentlyPressureDataPointPressure];
+        pressureZeroMb = [[pressureZero valueWithUnitsMode:kFCUnitsModeUS] doubleValue];
+        pressureOneMb = [[pressureOne valueWithUnitsMode:kFCUnitsModeUS] doubleValue];
+        hourDateZero = [dataPointZeroDict objectForKey:kFCCurrentlyPressureDataPointHourlyDate];
+        hourDateOne = [dataPointOneDict objectForKey:kFCCurrentlyPressureDataPointHourlyDate];
+        
+        double pressureDelta = (pressureOneMb - pressureZeroMb);
+        double hourDelta = ((float)[hourDateOne timeIntervalSinceDate:hourDateZero] / 3600.0f);
+        double pressureChangePerHour = pressureDelta / hourDelta;
+        
         NSInteger currentTrendDirection;
-        if (-0.5f >= currentTrend) {
+        if (-0.5f >= pressureChangePerHour) {
             currentTrendDirection = FPT_PressureFalling;
         }
-        else if (0.5f <= currentTrend) {
+        else if (0.5f <= pressureChangePerHour) {
             currentTrendDirection = FPT_PressureRising;
         }
         else {
             currentTrendDirection = FPT_PressureSteady;
         }
+        
+        // Debug info
+        NSLog(@"Pressure trend = %i; PressureDeltaPerHour = %.3f; PressureDelta = %.3f; HourDelta = %.3f; DataPointZero = %@; DataPointOne = %@",currentTrendDirection,pressureChangePerHour,pressureDelta,hourDelta,dataPointZeroDict,dataPointOneDict);
         
         return [NSNumber numberWithInt:currentTrendDirection];
     }
@@ -160,11 +161,12 @@
         [self.forecast.hourlyForecasts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             
             FCHourly *hourlyForecast = (FCHourly *)obj;
-            NSInteger conditionHour = (NSInteger)roundf(([hourlyForecast.fcHourlyDate timeIntervalSinceDate:currentForecastDate]/3600.0f));
-            // y-value is the barometric pressure
+            NSInteger conditionHour = (NSInteger)floor([hourlyForecast.fcHourlyDate timeIntervalSinceDate:currentForecastDate]/3600.0f);
+
             FCMeasurementPressure *pressure = [hourlyForecast.pressure copy];
-            CGPoint dataPoint = CGPointMake((float)conditionHour, [pressure.baseValue doubleValue]);
-            [dataPointArray addObject:[NSValue valueWithCGPoint:dataPoint]];
+            NSDictionary *pressureDataPointDict = @{kFCCurrentlyPressureDataPointHourlyDate : hourlyForecast.fcHourlyDate,kFCCurrentlyPressureDataPointHourIndex : [NSNumber numberWithInteger:conditionHour],kFCCurrentlyPressureDataPointABSHourIndex : [NSNumber numberWithInteger:abs(conditionHour)],kFCCurrentlyPressureDataPointPressure : pressure};
+
+            [dataPointArray addObject:pressureDataPointDict];
         }];
     }
     
