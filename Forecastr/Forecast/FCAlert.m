@@ -20,14 +20,23 @@
                                                }];
         
         [mapping mapKeyPath:@"time" toProperty:@"fcAlertDate" withValueBlock:^id(NSString *key, id value) {
+            // If object is not present in JSON, don't create
+            if (nil == value) return nil;
+            
             return (NSDate *)[NSDate dateWithTimeIntervalSince1970:[value doubleValue]];
         }];
         
         [mapping mapKeyPath:@"expires" toProperty:@"expires" withValueBlock:^id(NSString *key, id value) {
+            // If object is not present in JSON, don't create
+            if (nil == value) return nil;
+            
             return (NSDate *)[NSDate dateWithTimeIntervalSince1970:[value doubleValue]];
         }];
         
         [mapping mapKeyPath:@"uri" toProperty:@"url" withValueBlock:^id(NSString *key, id value) {
+            // If object is not present in JSON, don't create
+            if (nil == value) return nil;
+            
             return (NSURL *)[NSURL URLWithString:(NSString *)value];
         }];
         

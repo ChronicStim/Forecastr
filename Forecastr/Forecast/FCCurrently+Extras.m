@@ -34,7 +34,7 @@
     return daytime;
 }
 
--(UIImage *)iconCurrently;
+-(UIImage *)iconCurrentlyImage;
 {
     UIImage *iconImage = nil;
     if (nil != self.iconName) {
@@ -42,6 +42,16 @@
         iconImage = [[Forecastr sharedManager] iconImageForIconName:self.iconName daytime:useDaytimeImage imageSize:kForecastrIconsDefaultIconSize scale:0];
     }
     return iconImage;
+}
+
+-(NSString *)iconCurrentlyFilename;
+{
+    NSString *iconFilename = nil;
+    if (nil != self.iconName) {
+        BOOL useDaytimeImage = [self isItDaytime];
+        iconFilename = [[Forecastr sharedManager] refinedIconImageFilenameFromIconName:self.iconName daytime:useDaytimeImage];
+    }
+    return iconFilename;
 }
 
 -(NSString *)moonPhaseDescription;

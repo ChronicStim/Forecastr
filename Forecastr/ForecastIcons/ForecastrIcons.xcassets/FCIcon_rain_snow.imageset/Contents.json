@@ -9,6 +9,10 @@
       "idiom" : "universal",
       "filename" : "FCIcon_rain_snow@2x.png",
       "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {

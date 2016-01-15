@@ -21,6 +21,7 @@
 @property (nonatomic, strong) FCMeasurementPrecipIntensity* precipIntensity;
 @property (nonatomic, strong) FCMeasurementPrecipAccumulation* precipAccumulation;
 @property (nonatomic, strong) NSNumber* precipProbability;
+@property (nonatomic, copy) NSString* precipType;
 @property (nonatomic, strong) FCMeasurementPressure* pressure;
 @property (nonatomic, copy) NSString* hourlySummary;
 @property (nonatomic, strong) FCMeasurementTemperature* temperature;

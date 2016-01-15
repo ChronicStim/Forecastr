@@ -20,6 +20,7 @@
 @property (nonatomic, strong) NSNumber* ozone;
 @property (nonatomic, strong) FCMeasurementPrecipIntensity* precipIntensity;
 @property (nonatomic, strong) NSNumber* precipProbability;
+@property (nonatomic, copy) NSString* precipType;
 @property (nonatomic, strong) FCMeasurementPressure* pressure;
 @property (nonatomic, copy) NSString* currentSummary;
 @property (nonatomic, strong) FCMeasurementTemperature* temperature;

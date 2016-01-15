@@ -17,7 +17,8 @@ typedef enum {
 @interface FCCurrently (Extras)
 
 -(BOOL)isItDaytime;
--(UIImage *)iconCurrently;
+-(UIImage *)iconCurrentlyImage;
+-(NSString *)iconCurrentlyFilename;
 -(NSString *)moonPhaseDescription;
 -(NSNumber *)pressureTrend;
 -(NSString *)descriptionForPressureTrend:(ForecastPressureTrend)pressureTrend;
