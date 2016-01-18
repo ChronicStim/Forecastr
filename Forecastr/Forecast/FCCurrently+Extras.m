@@ -8,7 +8,9 @@
 
 #import "FCCurrently+Extras.h"
 #import "Forecastr+Icons.h"
-#import "FCForecastModel.h"
+#import "FCForecast+Extras.h"
+#import "FCDaily+Extras.h"
+#import "FCHourly+Extras.h"
 
 #define kFCCurrentlyPressureDataPointHourlyDate @"kFCCurrentlyPressureDataPointHourlyDate"
 #define kFCCurrentlyPressureDataPointPressure @"kFCCurrentlyPressureDataPointPressure"

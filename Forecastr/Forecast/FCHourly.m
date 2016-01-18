@@ -7,7 +7,7 @@
 //
 
 #import "FCHourly.h"
-#import "FCForecastModel.h"
+#import "FCFlags.h"
 
 @implementation FCHourly
 

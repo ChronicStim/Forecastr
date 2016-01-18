@@ -7,7 +7,7 @@
 //
 
 #import "FCMinutely.h"
-#import "FCForecastModel.h"
+#import "FCFlags.h"
 
 @implementation FCMinutely
 

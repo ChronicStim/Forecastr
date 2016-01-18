@@ -6,11 +6,11 @@
 //  Copyright © 2015 Chronic Stimulation, LLC. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "FCForecastModel.h"
 #import "EasyMapping.h"
 
 @class FCForecast, FCMeasurementTemperature, FCMeasurementWindSpeed, FCMeasurementDistance, FCMeasurementPressure, FCMeasurementPrecipIntensity, FCMeasurementPrecipAccumulation;
-@interface FCHourly : NSObject <EKMappingProtocol>
+@interface FCHourly : FCForecastModel <EKMappingProtocol>
 
 @property (nonatomic, strong) FCMeasurementTemperature* apparentTemperature;
 @property (nonatomic, strong) NSNumber* cloudCoverPercentage;

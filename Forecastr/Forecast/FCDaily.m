@@ -7,7 +7,7 @@
 //
 
 #import "FCDaily.h"
-#import "FCForecastModel.h"
+#import "FCFlags.h"
 
 @implementation FCDaily
 

@@ -8,7 +8,6 @@
 
 #import "FCForecastLocation.h"
 #import "Forecastr+CLLocation.h"
-#import "FCForecastModel.h"
 #import <AddressBookUI/AddressBookUI.h>
 
 @interface FCForecastLocation ()

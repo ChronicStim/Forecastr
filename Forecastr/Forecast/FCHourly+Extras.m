@@ -7,8 +7,9 @@
 //
 
 #import "FCHourly+Extras.h"
-#import "FCForecastModel.h"
 #import "Forecastr+Icons.h"
+#import "FCForecast+Extras.h"
+#import "FCCurrently+Extras.h"
 
 @implementation FCHourly (Extras)
 

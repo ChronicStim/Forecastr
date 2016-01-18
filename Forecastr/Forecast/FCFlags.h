@@ -6,12 +6,12 @@
 //  Copyright © 2015 Chronic Stimulation, LLC. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "FCForecastModel.h"
 #import "EasyMapping.h"
 #import "Forecastr.h"
 
 @class FCForecast;
-@interface FCFlags : NSObject <EKMappingProtocol>
+@interface FCFlags : FCForecastModel <EKMappingProtocol>
 
 @property (nonatomic, strong) id darkskyUnavailable;
 @property (nonatomic, strong) NSArray *darkskyStations;

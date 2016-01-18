@@ -6,12 +6,12 @@
 //  Copyright © 2015 Chronic Stimulation, LLC. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "FCForecastModel.h"
 
 typedef void (^FCForecastLocationCompletionHandler)();
 
 @class FCForecast;
-@interface FCForecastLocation : NSObject
+@interface FCForecastLocation : FCForecastModel
 
 @property (nonatomic, readonly, strong) NSNumber* latitude;
 @property (nonatomic, readonly, strong) NSNumber* longitude;

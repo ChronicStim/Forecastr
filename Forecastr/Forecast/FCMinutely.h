@@ -6,11 +6,11 @@
 //  Copyright © 2015 Chronic Stimulation, LLC. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "FCForecastModel.h"
 #import "EasyMapping.h"
 
 @class FCForecast, FCMeasurementPrecipIntensity;
-@interface FCMinutely : NSObject <EKMappingProtocol>
+@interface FCMinutely : FCForecastModel <EKMappingProtocol>
 
 @property (nonatomic, strong) FCMeasurementPrecipIntensity* precipIntensity;
 @property (nonatomic, strong) NSNumber* precipProbability;

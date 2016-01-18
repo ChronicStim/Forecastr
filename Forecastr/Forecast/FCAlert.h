@@ -6,11 +6,11 @@
 //  Copyright © 2015 Chronic Stimulation, LLC. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "FCForecastModel.h"
 #import "EasyMapping.h"
 
 @class FCForecast;
-@interface FCAlert : NSObject <EKMappingProtocol>
+@interface FCAlert : FCForecastModel <EKMappingProtocol>
 
 @property (nonatomic, copy) NSString *alertDescription;
 @property (nonatomic, strong) NSDate *expires;

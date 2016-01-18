@@ -6,11 +6,11 @@
 //  Copyright © 2015 Chronic Stimulation, LLC. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "FCForecastModel.h"
 #import "EasyMapping.h"
 
 @class FCFlags, FCCurrently, FCForecastLocation, FCDaily;
-@interface FCForecast : NSObject <EKMappingProtocol>
+@interface FCForecast : FCForecastModel <EKMappingProtocol>
 
 @property (nonatomic, copy) NSString *jsonResponseString; // Optionally store the JSON response for later use
 @property (nonatomic, strong) NSDate* fcForecastDate; // Could either be manually set or default from the value in the FCCurrently object

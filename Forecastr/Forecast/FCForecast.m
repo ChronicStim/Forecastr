@@ -8,7 +8,13 @@
 
 #import "FCForecast.h"
 #import "Forecastr+CLLocation.h"
-#import "FCForecastModel.h"
+#import "FCAlert.h"
+#import "FCFlags.h"
+#import "FCDaily+Extras.h"
+#import "FCMinutely.h"
+#import "FCCurrently+Extras.h"
+#import "FCHourly+Extras.h"
+#import "FCForecastLocation.h"
 
 @implementation FCForecast
 
