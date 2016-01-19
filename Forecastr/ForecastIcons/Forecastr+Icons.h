@@ -10,6 +10,7 @@
 
 #define kForecastrIconsDefaultIconSize CGSizeMake(64,64)
 #define kForecastrIconFilenamePrefix @"FCIcon_"
+#define kForecastrIconIconNotAvailableFilename @"iconNotAvailable"
 
 @class FCForecast;
 @interface Forecastr (Icons)

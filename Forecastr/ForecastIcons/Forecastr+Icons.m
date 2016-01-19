@@ -38,8 +38,8 @@
     // See if the iconName can be found in the mappingDict
     NSDictionary *iconDefinition = [mappingDict objectForKey:iconName];
     if (nil == iconDefinition || nil == [iconDefinition objectForKey:dayNightKey]) {
-        // Can't find a mapping for this iconName. Rather than return a nil, let's just default to a partlyCloudy day/night option.
-        iconDefinition = [mappingDict objectForKey:@"partly-cloudy-day"];
+        // Can't find a mapping for this iconName. Rather than return a nil, default to an icon that indicates that we can't locate that icon.
+        iconDefinition = [mappingDict objectForKey:kForecastrIconIconNotAvailableFilename];
     }
     
     // Get the appropriate day/night image from the definition

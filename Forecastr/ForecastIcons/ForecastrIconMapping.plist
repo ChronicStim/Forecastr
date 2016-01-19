@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>iconNotAvailable</key>
+	<dict>
+		<key>daytimeIconFilename</key>
+		<string>iconNotAvailable</string>
+		<key>nighttimeIconFilename</key>
+		<string>iconNotAvailable</string>
+	</dict>
 	<key>clear-day</key>
 	<dict>
 		<key>daytimeIconFilename</key>
