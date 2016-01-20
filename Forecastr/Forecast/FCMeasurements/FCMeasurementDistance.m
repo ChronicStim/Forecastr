@@ -33,7 +33,7 @@
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // km to miles
-                    double convertedValue = [self milesFromKilometers:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement milesFromKilometers:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 default:
@@ -46,12 +46,12 @@
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUK: {
                     // miles to km
-                    double convertedValue = [self kilometersFromMiles:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement kilometersFromMiles:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeUS: {
                     // miles to km
-                    double convertedValue = [self kilometersFromMiles:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement kilometersFromMiles:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeSI:

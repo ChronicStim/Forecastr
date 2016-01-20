@@ -119,7 +119,7 @@
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // C to F
-                    measurementValue = [NSNumber numberWithFloat:[self degreesFahrenheitFromCelsius:[self.baseValue floatValue]]];
+                    measurementValue = [NSNumber numberWithFloat:[FCMeasurement degreesFahrenheitFromCelsius:[self.baseValue floatValue]]];
                 }   break;
                 default:
                     break;
@@ -132,7 +132,7 @@
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUS: {
                     // F to C
-                    measurementValue = [NSNumber numberWithFloat:[self degreesCelsiusFromFahrenheit:[self.baseValue floatValue]]];
+                    measurementValue = [NSNumber numberWithFloat:[FCMeasurement degreesCelsiusFromFahrenheit:[self.baseValue floatValue]]];
                 }   break;
                 case kFCUnitsModeUK:
                 case kFCUnitsModeSI:
@@ -185,88 +185,88 @@
 
 #pragma mark - Temperature
 
--(double)degreesFahrenheitFromCelsius:(double)c;
++(double)degreesFahrenheitFromCelsius:(double)c;
 {
     return ((c * 9.0f / 5.0f) + 32.0f);
 }
 
--(double)degreesCelsiusFromFahrenheit:(double)f;
++(double)degreesCelsiusFromFahrenheit:(double)f;
 {
     return ((f -32.0f) * 5.0f / 9.0f);
 }
 
 #pragma mark - Distance
 
--(double)milesFromKilometers:(double)km;
++(double)milesFromKilometers:(double)km;
 {
     return (km * 0.621371f);
 }
 
--(double)kilometersFromMiles:(double)miles;
++(double)kilometersFromMiles:(double)miles;
 {
     return (miles * 1.60934f);
 }
 
--(double)millimetersFromInches:(double)inches;
++(double)millimetersFromInches:(double)inches;
 {
     return (inches * 25.4f);
 }
 
--(double)inchesFromMillimeters:(double)mm;
++(double)inchesFromMillimeters:(double)mm;
 {
     return (mm / 25.4f);
 }
 
--(double)centimetersFromInches:(double)inches;
++(double)centimetersFromInches:(double)inches;
 {
     return ((inches * 25.4f) / 10.0f);
 }
 
--(double)inchesFromCentimeters:(double)cm;
++(double)inchesFromCentimeters:(double)cm;
 {
     return ((cm * 10.0f) / 25.4f);
 }
 
 #pragma mark - Pressure
 
--(double)milliBarsFromHectoPascal:(double)hPa;
++(double)milliBarsFromHectoPascal:(double)hPa;
 {
     return (hPa * 1.0f);
 }
 
--(double)hectoPascalFromMilliBar:(double)mb;
++(double)hectoPascalFromMilliBar:(double)mb;
 {
     return (mb * 1.0f);
 }
 
 #pragma mark - Speed
 
--(double)milesPerHourFromMetersPerSecond:(double)metersPerSec;
++(double)milesPerHourFromMetersPerSecond:(double)metersPerSec;
 {
-    return ([self milesFromKilometers:(metersPerSec / 1000.0f)] * 3600.0f);
+    return ([FCMeasurement milesFromKilometers:(metersPerSec / 1000.0f)] * 3600.0f);
 }
 
--(double)metersPerSecondFromMilesPerHour:(double)mph;
++(double)metersPerSecondFromMilesPerHour:(double)mph;
 {
-    return (([self kilometersFromMiles:mph] * 1000.0f) / 3600.0f);
+    return (([FCMeasurement kilometersFromMiles:mph] * 1000.0f) / 3600.0f);
 }
 
--(double)kilometersPerHourFromMilesPerHour:(double)mph;
++(double)kilometersPerHourFromMilesPerHour:(double)mph;
 {
-    return [self kilometersFromMiles:mph];
+    return [FCMeasurement kilometersFromMiles:mph];
 }
 
--(double)milesPerHourFromKilometersPerHour:(double)kph;
++(double)milesPerHourFromKilometersPerHour:(double)kph;
 {
-    return [self milesFromKilometers:kph];
+    return [FCMeasurement milesFromKilometers:kph];
 }
 
--(double)kilometersPerHourFromMetersPerSecond:(double)metersPerSec;
++(double)kilometersPerHourFromMetersPerSecond:(double)metersPerSec;
 {
     return ((metersPerSec * 3600.0f) / 1000.0f);
 }
 
--(double)metersPerSecondFromKilometersPerHour:(double)kph;
++(double)metersPerSecondFromKilometersPerHour:(double)kph;
 {
     return ((kph * 1000.0f) / 3600.0f);
 }

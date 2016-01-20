@@ -29,7 +29,7 @@
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // mm/hr to in/hr
-                    double convertedValue = [self inchesFromMillimeters:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement inchesFromMillimeters:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 default:
@@ -43,7 +43,7 @@
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUS: {
                     // in/hr to mm/hr
-                    double convertedValue = [self millimetersFromInches:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement millimetersFromInches:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeUK:

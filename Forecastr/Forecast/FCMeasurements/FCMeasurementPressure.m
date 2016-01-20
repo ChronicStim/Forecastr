@@ -29,7 +29,7 @@
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // hPa to mb
-                    double convertedValue = [self milliBarsFromHectoPascal:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement milliBarsFromHectoPascal:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 default:
@@ -43,7 +43,7 @@
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUS: {
                     // mb to hPa
-                    double convertedValue = [self hectoPascalFromMilliBar:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement hectoPascalFromMilliBar:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeUK:

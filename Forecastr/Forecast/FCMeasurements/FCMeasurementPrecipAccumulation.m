@@ -29,7 +29,7 @@
                 case kFCUnitsModeSI:
                 case kFCUnitsModeCA: {
                     // cm to in
-                    double convertedValue = [self inchesFromCentimeters:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement inchesFromCentimeters:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 default:
@@ -43,7 +43,7 @@
             switch (self.baseUnitsMode) {
                 case kFCUnitsModeUS: {
                     // in to cm
-                    double convertedValue = [self centimetersFromInches:[self.baseValue doubleValue]];
+                    double convertedValue = [FCMeasurement centimetersFromInches:[self.baseValue doubleValue]];
                     measurementValue = [NSNumber numberWithDouble:convertedValue];
                 }   break;
                 case kFCUnitsModeUK:
