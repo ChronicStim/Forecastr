@@ -34,6 +34,8 @@
 // Pressure
 +(double)milliBarsFromHectoPascal:(double)hPa;
 +(double)hectoPascalFromMilliBar:(double)mb;
++(double)inchesHgFromMilliBar:(double)mb;
++(double)milliBarsFromInchesHg:(double)inHg;
 
 // Speed
 +(double)milesPerHourFromMetersPerSecond:(double)metersPerSec;
@@ -42,5 +44,8 @@
 +(double)milesPerHourFromKilometersPerHour:(double)kph;
 +(double)kilometersPerHourFromMetersPerSecond:(double)metersPerSec;
 +(double)metersPerSecondFromKilometersPerHour:(double)kph;
+
+// Direction
++(NSString *)cardinalDirectionFromCompassDegrees:(double)degrees;
 
 @end

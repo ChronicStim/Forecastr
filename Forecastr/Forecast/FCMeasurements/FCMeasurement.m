@@ -239,6 +239,16 @@
     return (mb * 1.0f);
 }
 
++(double)inchesHgFromMilliBar:(double)mb;
+{
+    return (mb * 0.02952998751f);
+}
+
++(double)milliBarsFromInchesHg:(double)inHg;
+{
+    return (inHg / 0.02952998751f);
+}
+
 #pragma mark - Speed
 
 +(double)milesPerHourFromMetersPerSecond:(double)metersPerSec;
@@ -269,6 +279,21 @@
 +(double)metersPerSecondFromKilometersPerHour:(double)kph;
 {
     return ((kph * 1000.0f) / 3600.0f);
+}
+
+#pragma mark - Direction
+
++(NSString *)cardinalDirectionFromCompassDegrees:(double)degrees;
+{
+    static NSString *const Directions[] = {
+        @"N", @"NNE",  @"NE", @"ENE", @"E", @"ESE", @"SE", @"SSE",
+        @"S", @"SSW", @"SW", @"WSW", @"W", @"WNW", @"NW", @"NNW"
+    };
+    static const int DirectionsCount = sizeof Directions / sizeof *Directions;
+    
+    int wind = remainder(round((degrees / 360) * DirectionsCount), DirectionsCount);
+    if (wind < 0) wind += DirectionsCount;
+    return Directions[wind];
 }
 
 @end
