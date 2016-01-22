@@ -106,7 +106,7 @@
     if (nil != self.placemark) {
         if (IOS_VERSION_GREATER_THAN_OR_EQUAL_TO(@"9.0")) {
             // Post-iOS 9.0 need to use placemark components to build up address string manually
-            addressString = @"TODO";
+            addressString = [Forecastr formattedDisplayStringForPlacemark:self.placemark];
         } else {
             // Pre-iOS 9.0 can use ABPerson function to create full address string from placemark
             addressString = ABCreateStringWithAddressDictionary(self.placemark.addressDictionary, YES);

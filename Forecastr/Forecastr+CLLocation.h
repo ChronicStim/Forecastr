@@ -109,4 +109,6 @@
 
 - (void)removeCachedForecastForLocation:(CLLocation *)location time:(NSNumber *)time exclusions:(NSArray *)exclusions extend:(NSString *)extendCommand DEPRECATED_ATTRIBUTE;
 
++(NSString *)formattedDisplayStringForPlacemark:(CLPlacemark *)placemark;
+
 @end

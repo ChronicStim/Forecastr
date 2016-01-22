@@ -87,4 +87,18 @@
     [self removeCachedForecastForLocation:location time:time exclusions:exclusions extend:extendCommand language:nil];
 }
 
++(NSString *)formattedDisplayStringForPlacemark:(CLPlacemark *)placemark;
+{
+    if (nil == placemark) {
+        return @"";
+    }
+    
+    NSArray *formattedAddressLines = [[placemark addressDictionary] objectForKey:@"FormattedAddressLines"];
+    NSString *displayString = [NSString new];
+    for (NSString *line in formattedAddressLines) {
+        displayString = [displayString stringByAppendingFormat:@"%@\n",line];
+    }
+    return displayString;
+}
+
 @end
