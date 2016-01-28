@@ -136,9 +136,9 @@
         }
         
         // Debug info
-        NSLog(@"Pressure trend = %i; PressureDeltaPerHour = %.3f; PressureDelta = %.3f; HourDelta = %.3f; DataPointZero = %@; DataPointOne = %@",currentTrendDirection,pressureChangePerHour,pressureDelta,hourDelta,dataPointZeroDict,dataPointOneDict);
+        NSLog(@"Pressure trend = %li; PressureDeltaPerHour = %.3f; PressureDelta = %.3f; HourDelta = %.3f; DataPointZero = %@; DataPointOne = %@",(long)currentTrendDirection,pressureChangePerHour,pressureDelta,hourDelta,dataPointZeroDict,dataPointOneDict);
         
-        return [NSNumber numberWithInt:currentTrendDirection];
+        return [NSNumber numberWithInteger:currentTrendDirection];
     }
     
     return nil;
@@ -176,7 +176,7 @@
             NSInteger conditionHour = (NSInteger)floor([hourlyForecast.fcHourlyDate timeIntervalSinceDate:currentForecastDate]/3600.0f);
 
             FCMeasurementPressure *pressure = [hourlyForecast.pressure copy];
-            NSDictionary *pressureDataPointDict = @{kFCCurrentlyPressureDataPointHourlyDate : hourlyForecast.fcHourlyDate,kFCCurrentlyPressureDataPointHourIndex : [NSNumber numberWithInteger:conditionHour],kFCCurrentlyPressureDataPointABSHourIndex : [NSNumber numberWithInteger:abs(conditionHour)],kFCCurrentlyPressureDataPointPressure : pressure};
+            NSDictionary *pressureDataPointDict = @{kFCCurrentlyPressureDataPointHourlyDate : hourlyForecast.fcHourlyDate,kFCCurrentlyPressureDataPointHourIndex : [NSNumber numberWithInteger:conditionHour],kFCCurrentlyPressureDataPointABSHourIndex : [NSNumber numberWithInteger:abs((int)conditionHour)],kFCCurrentlyPressureDataPointPressure : pressure};
 
             [dataPointArray addObject:pressureDataPointDict];
         }];
