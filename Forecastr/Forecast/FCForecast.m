@@ -109,7 +109,7 @@
 
 #pragma mark - KVO Observing Methods
 
--(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context;
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context;
 {
     NSArray *keyPaths = @[@"latitude",@"longitude"];
     if ([keyPaths containsObject:keyPath]) {

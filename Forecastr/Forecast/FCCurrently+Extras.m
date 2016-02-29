@@ -170,7 +170,7 @@
     if (self.forecast && self.forecast.hourlyForecasts) {
         
         NSDate *currentForecastDate = [self.fcCurrentlyDate copy];
-        [self.forecast.hourlyForecasts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self.forecast.hourlyForecasts enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             
             FCHourly *hourlyForecast = (FCHourly *)obj;
             NSInteger conditionHour = (NSInteger)floor([hourlyForecast.fcHourlyDate timeIntervalSinceDate:currentForecastDate]/3600.0f);
