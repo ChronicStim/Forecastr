@@ -1,4 +1,4 @@
-//
+    //
 //  FCCurrently+Extras.h
 //  PainTracker
 //
@@ -9,10 +9,18 @@
 #import "FCCurrently.h"
 
 typedef enum {
+    FPT_PressureUndefined = NSIntegerMin,
+    FPT_PressureFallingStrong = -2,
     FPT_PressureFalling = -1,
     FPT_PressureSteady = 0,
-    FPT_PressureRising = 1
+    FPT_PressureRising = 1,
+    FPT_PressureRisingStrong = 2
 } ForecastPressureTrend;
+
+typedef enum {
+    FPTHB_08 = 8,
+    FPTHB_24 = 24
+} ForecastPressureTrendHourBand;
 
 @interface FCCurrently (Extras)
 
