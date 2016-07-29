@@ -22,6 +22,12 @@ typedef enum {
     FPTHB_24 = 24
 } ForecastPressureTrendHourBand;
 
+typedef enum {
+    FPTM_CPTOriginal = 0,
+    FPTM_LongShortTermComparison = 1,
+    FPTM_LastThreeHoursFMHModel = 2
+} ForecastPressureTrendMethod;
+
 @interface FCCurrently (Extras)
 
 -(BOOL)isItDaytime;
@@ -29,6 +35,7 @@ typedef enum {
 -(NSString *)iconCurrentlyFilename;
 -(NSString *)moonPhaseDescription;
 -(NSNumber *)pressureTrend;
+-(NSNumber *)pressureTrendWithMethod:(ForecastPressureTrendMethod)method;
 -(NSString *)descriptionForPressureTrend:(ForecastPressureTrend)pressureTrend;
 -(NSNumber *)humidityAsIntegerNumber;
 
