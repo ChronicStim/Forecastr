@@ -34,6 +34,9 @@ typedef enum {
     kFCCacheNotEnabled
 } ForecastrErrorType;
 
+// API Call Limit
+NSString *const kFCAPICallLimitExceededWarning = @"ForecastrAPICallLimitExceeded";
+
 // Cache keys
 NSString *const kFCCacheKey = @"CachedForecasts";
 NSString *const kFCCacheArchiveKey = @"ArchivedForecast";
@@ -137,12 +140,25 @@ NSString *const kFCIconHurricane = @"hurricane";
 NSString *const kFCNearestStormDistance = @"nearestStormDistance";
 NSString *const kFCNearestStormBearing = @"nearestStormBearing";
 
+// Keys for the apiActivityTracker
+BOOL const kFCAPIActivityTrackerIsActive = YES;
+NSString *const kFCAPIActivityTrackerRecentAPICallDates = @"kFCAPIActivityTrackerRecentAPICallDates";
+NSString *const kFCAPIActivityTrackerAPICallRejectedDates = @"kFCAPIActivityTrackerAPICallRejectedDates";
+NSUInteger const kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod = 100;
+NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; // Run cleanout every 5 minutes
+
 @interface Forecastr ()
 {
     NSUserDefaults *userDefaults;
     
     dispatch_queue_t async_queue;
+    
+    BOOL _trackAPIActivity;
+    NSTimer *_apiActivityTrackerTimer;
 }
+@property (nonatomic, strong) NSMutableSet *apiActivityRecentAPICallDates;
+@property (nonatomic, strong) NSMutableSet *apiActivityAPICallRejectedDates;
+
 @end
 
 @implementation Forecastr
@@ -179,8 +195,195 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
         // Setup KVO monitoring of key properties that effect when cache needs to be flushed
         [self addObserver:self forKeyPath:@"language" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
         [self addObserver:self forKeyPath:@"units" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:nil];
+        
+        // Setup APITracking & periodic cleanout timer
+        _trackAPIActivity = kFCAPIActivityTrackerIsActive;
+        if (_trackAPIActivity) {
+            [self enabledAPICallTracking];
+        }
     }
     return self;
+}
+
+-(void)dealloc
+{
+    if (_apiActivityTrackerTimer) {
+        [_apiActivityTrackerTimer invalidate];
+    }
+}
+
+#pragma mark - API Call Tracking Methods
+
+-(void)enabledAPICallTracking;
+{
+    __weak __typeof__(self) weakSelf = self;
+    _apiActivityTrackerTimer = [NSTimer bk_scheduledTimerWithTimeInterval:kFCAPIActivityTrackerCleanoutOperationTimerInterval block:^(NSTimer *timer) {
+        [weakSelf cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
+    } repeats:YES];
+    
+    /* FOR DEBUGGING ONLY
+    //[self testingClearAPITrackers];
+    //[self testingPreloadAPITrackerWithSome:20 randomCallsFromBetweenStartHours:24 stopHoursAgo:0];
+    */
+}
+
+-(NSMutableSet *)apiActivityRecentAPICallDates;
+{
+    if (nil != _apiActivityRecentAPICallDates) {
+        return _apiActivityRecentAPICallDates;
+    }
+    
+    _apiActivityRecentAPICallDates = [NSMutableSet new];
+    NSArray *existingCalls = [userDefaults objectForKey:kFCAPIActivityTrackerRecentAPICallDates];
+    if (nil != existingCalls) {
+        [_apiActivityRecentAPICallDates addObjectsFromArray:existingCalls];
+    }
+    return _apiActivityRecentAPICallDates;
+}
+
+-(NSMutableSet *)apiActivityAPICallRejectedDates;
+{
+    if (nil != _apiActivityAPICallRejectedDates) {
+        return _apiActivityAPICallRejectedDates;
+    }
+    
+    _apiActivityAPICallRejectedDates = [NSMutableSet new];
+    NSArray *existingCalls = [userDefaults objectForKey:kFCAPIActivityTrackerAPICallRejectedDates];
+    if (nil != existingCalls) {
+        [_apiActivityAPICallRejectedDates addObjectsFromArray:existingCalls];
+    }
+    return _apiActivityAPICallRejectedDates;
+}
+
+-(void)updateAPIActivityTrackerWithAllowedCall:(BOOL)allowed forDate:(NSDate *)callDate;
+{
+    NSArray *arrayToUpdate = nil;
+    NSString *setKey = nil;
+    if (allowed) {
+        [self.apiActivityRecentAPICallDates addObject:callDate];
+        arrayToUpdate = [NSArray arrayWithArray:[self.apiActivityRecentAPICallDates allObjects]];
+        setKey = kFCAPIActivityTrackerRecentAPICallDates;
+    }
+    else {
+        [self.apiActivityAPICallRejectedDates addObject:callDate];
+        arrayToUpdate = [NSArray arrayWithArray:[self.apiActivityAPICallRejectedDates allObjects]];
+        setKey = kFCAPIActivityTrackerAPICallRejectedDates;
+        
+    }
+    [self synchronizeToUserDefaultsForAPITrackingArray:arrayToUpdate forKey:setKey];
+    DDLogVerbose(@"Weather API %@ allow a call on %@",(allowed ? @"DID" : @"DID NOT"),callDate);
+}
+
+-(void)synchronizeToUserDefaultsForAPITrackingArray:(NSArray *)arrayToSync forKey:(NSString *)keyForSet;
+{
+    if (nil != arrayToSync && nil != keyForSet) {
+        [userDefaults setObject:arrayToSync forKey:keyForSet];
+        [userDefaults synchronize];
+    }
+}
+
+-(BOOL)checkIfOKToCallAPINow;
+{
+    BOOL allowCall = NO;
+    if (kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod > [self.apiActivityRecentAPICallDates count]) {
+        allowCall = YES;
+    }
+    
+    __weak __typeof__(self) weakSelf = self;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+        [weakSelf updateAPIActivityTrackerWithAllowedCall:allowCall forDate:[NSDate date]];
+    });
+    
+    if (!allowCall) {
+        // Notify user that API is temporarily locked
+        [self informUserThatAPILimitsHaveBeenExceeded];
+    }
+    
+    return allowCall;
+}
+
+-(void)cleanoutAPIActivityTrackerForCallsOlderThanHours:(NSInteger)hours;
+{
+    @synchronized (self.apiActivityRecentAPICallDates) {
+        
+        int origCount = [self.apiActivityRecentAPICallDates count];
+        NSTimeInterval timeInterval = [[NSDate date] timeIntervalSinceReferenceDate] - ((60 * 60) * hours);
+        NSDate *checkDate = [NSDate dateWithTimeIntervalSinceReferenceDate:timeInterval];
+        
+        NSSet *callsToRemove = [self.apiActivityRecentAPICallDates bk_select:^BOOL(id obj) {
+            //DDLogVerbose(@"Weather API Recent Call Date = %@",(NSDate *)obj);
+            if ([(NSDate *)obj laterDate:checkDate] == checkDate) {
+                return YES;
+            }
+            return NO;
+        }];
+        
+        for (NSDate *call in callsToRemove) {
+            [self.apiActivityRecentAPICallDates removeObject:call];
+            [self.apiActivityAPICallRejectedDates addObject:call];
+        }
+        
+        // Update the recent calls data
+        [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray arrayWithArray:[self.apiActivityRecentAPICallDates allObjects]] forKey:kFCAPIActivityTrackerRecentAPICallDates];
+        
+        // Update the rejected calls data
+        [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray arrayWithArray:[self.apiActivityAPICallRejectedDates allObjects]] forKey:kFCAPIActivityTrackerAPICallRejectedDates];
+        
+        int newCount = [self.apiActivityRecentAPICallDates count];
+        DDLogVerbose(@"Weather API cleanout process removed %i calls from the collection. Orig: %i; New: %i",(origCount-newCount),origCount,newCount);
+    }
+}
+
+-(void)informUserThatAPILimitsHaveBeenExceeded;
+{
+    NSString *title = NSLocalizedString(@"Weather API Call Requests Exceeded", @"Weather API Call Requests Exceeded");
+    NSString *message = [NSString stringWithFormat:@"You have exceeded the number of allowed API calls to Weather Data Service. The policy within Chronic Pain Tracker permits a maximum of %i API calls per 24 hour period. Please wait 15-30 minutes and then try your request again.",kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod];
+    
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"OK") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        
+    }];
+    [alertController addAction:okAction];
+    
+    UIViewController *activeVC = [UIApplication sharedApplication].keyWindow.rootViewController;
+    [activeVC presentViewController:alertController animated:YES completion:nil];
+}
+
+-(void)testingPreloadAPITrackerWithSome:(NSInteger)callCount randomCallsFromBetweenStartHours:(NSInteger)startHours stopHoursAgo:(NSInteger)stopHours;
+{
+    NSAssert(startHours > stopHours,@"StartHours value must be larger than the stopHours value.");
+    NSInteger callTimeRange = (60*60*(startHours-stopHours));
+    NSInteger callTimeOffset = -(60*60*stopHours);
+    NSDate *now = [NSDate date];
+    
+    NSMutableSet *randomCallDates = [NSMutableSet new];
+    NSDate *earlyDate = [NSDate date];
+    NSDate *lateDate = [NSDate date];
+    for (int i=0; i<callCount; i++) {
+        
+        NSInteger randomTimeInterval = ((-(arc4random() % callTimeRange)) + callTimeOffset);
+        NSDate *randomDate = [now dateByAddingTimeInterval:randomTimeInterval];
+        
+        if ([randomDate earlierDate:earlyDate] == randomDate) {
+            earlyDate = [randomDate copy];
+        }
+        if ([randomDate laterDate:lateDate] == randomDate) {
+            lateDate = [randomDate copy];
+        }
+        [randomCallDates addObject:randomDate];
+    }
+    
+    DDLogVerbose(@"Weather API Testing is adding %i random call dates to the recent call data (%i existing calls). Earliest random call = %@; Latest random call = %@",[randomCallDates count],[self.apiActivityRecentAPICallDates count],earlyDate,lateDate);
+    [self.apiActivityRecentAPICallDates addObjectsFromArray:[randomCallDates allObjects]];
+    [self cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
+}
+
+-(void)testingClearAPITrackers;
+{
+    DDLogVerbose(@"Weather API Testing is clearing tracking sets. Recent calls (%i)->0 ; Rejected Calls (%i)->0",[self.apiActivityRecentAPICallDates count],[self.apiActivityAPICallRejectedDates count]);
+    [self.apiActivityRecentAPICallDates removeAllObjects];
+    [self.apiActivityAPICallRejectedDates removeAllObjects];
+    [self cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
 }
 
 # pragma mark - Instance Methods
@@ -192,7 +395,7 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
                        success:(void (^)(id JSON))success
                        failure:(void (^)(NSError *error, id response))failure
 {
-  [self getForecastForLatitude:lat longitude:lon time:time exclusions:exclusions extend:nil success:success failure:failure];
+    [self getForecastForLatitude:lat longitude:lon time:time exclusions:exclusions extend:nil success:success failure:failure];
 }
 
 - (void)getForecastForLatitude:(double)lat
@@ -240,38 +443,45 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
         // If we got here, cache isn't enabled or we didn't find a valid/unexpired forecast
         // for this location in cache so let's query the servers for one
         
-        // Asynchronously kick off the GET request on the API for the generated URL (i.e. not the one used as a cache key)
-        if (callback) {
-            
-            if (self.requestHTTPCompression) {
-                [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
-                [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+        // Check if user has exceeded the number of API calls allowed before proceeding
+        if (!_trackAPIActivity || [self checkIfOKToCallAPINow]) {
+            // Asynchronously kick off the GET request on the API for the generated URL (i.e. not the one used as a cache key)
+            if (callback) {
+                
+                if (self.requestHTTPCompression) {
+                    [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
+                    [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+                }
+                [ForecastrAPIClient sharedClient].responseSerializer = [AFHTTPResponseSerializer serializer];
+                [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+                    NSString *JSONP = [[NSString alloc] initWithData:responseObject encoding:NSASCIIStringEncoding];
+                    if (self.cacheEnabled) [self cacheForecast:JSONP withURLString:cacheKey];
+                    [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
+                    success(JSONP);
+                } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                    NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
+                    [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
+                    failure(error, response);
+                }];
+                
+            } else {
+                if (self.requestHTTPCompression) {
+                    [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
+                    [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+                }
+                [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id JSON) {
+                    if (self.cacheEnabled) [self cacheForecast:JSON withURLString:cacheKey];
+                    success(JSON);
+                } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                    NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
+                    failure(error, response);
+                }];
+                
             }
-            [ForecastrAPIClient sharedClient].responseSerializer = [AFHTTPResponseSerializer serializer];
-            [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
-                NSString *JSONP = [[NSString alloc] initWithData:responseObject encoding:NSASCIIStringEncoding];
-                if (self.cacheEnabled) [self cacheForecast:JSONP withURLString:cacheKey];
-                [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
-                success(JSONP);
-            } failure:^(NSURLSessionDataTask *task, NSError *error) {
-                NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
-                [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
-                failure(error, response);
-            }];
-            
-        } else {
-            if (self.requestHTTPCompression) {
-                [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
-                [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
-            }
-            [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id JSON) {
-                if (self.cacheEnabled) [self cacheForecast:JSON withURLString:cacheKey];
-                success(JSON);
-            } failure:^(NSURLSessionDataTask *task, NSError *error) {
-                NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
-                failure(error, response);
-            }];
-            
+        }
+        else {
+            // Too many calls to the API. Gracefully fail the request
+            failure(nil, kFCAPICallLimitExceededWarning);
         }
     }];
 }

@@ -37,6 +37,9 @@ typedef enum {
     kFCUnitsModeCA = 4
 } ForecastrUnitsMode;
 
+// API Call Limit
+extern NSString *const kFCAPICallLimitExceededWarning;
+
 // Cache keys
 extern NSString *const kFCCacheKey;
 extern NSString *const kFCCacheArchiveKey;
