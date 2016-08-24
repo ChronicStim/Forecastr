@@ -306,7 +306,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 {
     @synchronized (self.apiActivityRecentAPICallDates) {
         
-        int origCount = [self.apiActivityRecentAPICallDates count];
+        int origCount = (int)[self.apiActivityRecentAPICallDates count];
         NSTimeInterval timeInterval = [[NSDate date] timeIntervalSinceReferenceDate] - ((60 * 60) * hours);
         NSDate *checkDate = [NSDate dateWithTimeIntervalSinceReferenceDate:timeInterval];
         
@@ -329,7 +329,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         // Update the rejected calls data
         [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray arrayWithArray:[self.apiActivityAPICallRejectedDates allObjects]] forKey:kFCAPIActivityTrackerAPICallRejectedDates];
         
-        int newCount = [self.apiActivityRecentAPICallDates count];
+        int newCount = (int)[self.apiActivityRecentAPICallDates count];
         DDLogVerbose(@"Weather API cleanout process removed %i calls from the collection. Orig: %i; New: %i",(origCount-newCount),origCount,newCount);
     }
 }
@@ -337,7 +337,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 -(void)informUserThatAPILimitsHaveBeenExceeded;
 {
     NSString *title = NSLocalizedString(@"Weather API Call Requests Exceeded", @"Weather API Call Requests Exceeded");
-    NSString *message = [NSString stringWithFormat:@"You have exceeded the number of allowed API calls to Weather Data Service. The policy within Chronic Pain Tracker permits a maximum of %i API calls per 24 hour period. Please wait 15-30 minutes and then try your request again.",kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod];
+    NSString *message = [NSString stringWithFormat:@"You have exceeded the number of allowed API calls to Weather Data Service. The policy within Chronic Pain Tracker permits a maximum of %lu API calls per 24 hour period. Please wait 15-30 minutes and then try your request again.",(unsigned long)kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod];
     
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"OK") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
@@ -373,14 +373,14 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         [randomCallDates addObject:randomDate];
     }
     
-    DDLogVerbose(@"Weather API Testing is adding %i random call dates to the recent call data (%i existing calls). Earliest random call = %@; Latest random call = %@",[randomCallDates count],[self.apiActivityRecentAPICallDates count],earlyDate,lateDate);
+    DDLogVerbose(@"Weather API Testing is adding %lu random call dates to the recent call data (%lu existing calls). Earliest random call = %@; Latest random call = %@",(unsigned long)[randomCallDates count],(unsigned long)[self.apiActivityRecentAPICallDates count],earlyDate,lateDate);
     [self.apiActivityRecentAPICallDates addObjectsFromArray:[randomCallDates allObjects]];
     [self cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
 }
 
 -(void)testingClearAPITrackers;
 {
-    DDLogVerbose(@"Weather API Testing is clearing tracking sets. Recent calls (%i)->0 ; Rejected Calls (%i)->0",[self.apiActivityRecentAPICallDates count],[self.apiActivityAPICallRejectedDates count]);
+    DDLogVerbose(@"Weather API Testing is clearing tracking sets. Recent calls (%lu)->0 ; Rejected Calls (%lu)->0",(unsigned long)[self.apiActivityRecentAPICallDates count],(unsigned long)[self.apiActivityAPICallRejectedDates count]);
     [self.apiActivityRecentAPICallDates removeAllObjects];
     [self.apiActivityAPICallRejectedDates removeAllObjects];
     [self cleanoutAPIActivityTrackerForCallsOlderThanHours:24];

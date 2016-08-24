@@ -193,7 +193,7 @@
             if (nil != lastThreeHourSubset && 0 < [lastThreeHourSubset count]) {
                 [dataSubset addObjectsFromArray:lastThreeHourSubset];
             }
-            int lastThreeCount = [lastThreeHourSubset count];
+            int lastThreeCount = (int)[lastThreeHourSubset count];
             if (3 > lastThreeCount) {
                 // Not enough points from the historical data, so now get some of the forecast points
                 int howManyMoreNeeded = 3 - lastThreeCount;
