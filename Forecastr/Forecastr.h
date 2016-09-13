@@ -39,6 +39,7 @@ typedef enum {
 
 // API Call Limit
 extern NSString *const kFCAPICallLimitExceededWarning;
+extern NSString *const kFCAPIRecentCallClearingCode;
 
 // Cache keys
 extern NSString *const kFCCacheKey;
@@ -327,5 +328,9 @@ extern NSString *const kFCNearestStormBearing;
  * Flushes all forecasts from the cache
  */
 - (void)flushCache;
+
+
+-(NSString *)messageForSettingsAlertViewRequestingAPICallTrackingCacheReset;
+-(BOOL)allowAPICallTrackingCacheResetWithSecurityCode:(NSString *)securityCode;
 
 @end

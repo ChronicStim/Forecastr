@@ -34,8 +34,16 @@ typedef enum {
     kFCCacheNotEnabled
 } ForecastrErrorType;
 
+typedef enum {
+    WACR_APICallRejected = 0,
+    WACR_APICallPermitted = 1
+} WeatherAPICallResult;
+
 // API Call Limit
 NSString *const kFCAPICallLimitExceededWarning = @"ForecastrAPICallLimitExceeded";
+NSString *const kFCAPIRecentCallDateKey = @"kFCAPIRecentCallDateKey";
+NSString *const kFCAPIRecentCallResultKey = @"kFCAPIRecentCallResultKey";
+NSString *const kFCAPIRecentCallClearingCode = @"CPTWeather2702";
 
 // Cache keys
 NSString *const kFCCacheKey = @"CachedForecasts";
@@ -144,7 +152,7 @@ NSString *const kFCNearestStormBearing = @"nearestStormBearing";
 BOOL const kFCAPIActivityTrackerIsActive = YES;
 NSString *const kFCAPIActivityTrackerRecentAPICallDates = @"kFCAPIActivityTrackerRecentAPICallDates";
 NSString *const kFCAPIActivityTrackerAPICallRejectedDates = @"kFCAPIActivityTrackerAPICallRejectedDates";
-NSUInteger const kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod = 100;
+NSUInteger const kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod = 250;
 NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; // Run cleanout every 5 minutes
 
 @interface Forecastr ()
@@ -155,9 +163,11 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     
     BOOL _trackAPIActivity;
     NSTimer *_apiActivityTrackerTimer;
+    
 }
 @property (nonatomic, strong) NSMutableSet *apiActivityRecentAPICallDates;
-@property (nonatomic, strong) NSMutableSet *apiActivityAPICallRejectedDates;
+@property (nonatomic, strong) NSOperationQueue *apiActivityTrackingOpQueue;
+@property (nonatomic, strong) NSDateFormatter *forecastrDateFormatter;
 
 @end
 
@@ -212,19 +222,49 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     }
 }
 
+-(NSDateFormatter *)forecastrDateFormatter;
+{
+    if (nil != _forecastrDateFormatter)
+        return _forecastrDateFormatter;
+    
+    _forecastrDateFormatter = [[NSDateFormatter alloc] init];
+    NSLocale *enUSPOSIXLocale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    [_forecastrDateFormatter setLocale:enUSPOSIXLocale];
+    [_forecastrDateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSS"];
+    return _forecastrDateFormatter;
+}
+
 #pragma mark - API Call Tracking Methods
 
 -(void)enabledAPICallTracking;
 {
+    // Run the call tracking cleanout process immediately on startup
+    [self cleanoutAPIActivityTrackerOnBackgroundThread];
+    
+    // Also setup a reoccuring timer to run the process
     __weak __typeof__(self) weakSelf = self;
     _apiActivityTrackerTimer = [NSTimer bk_scheduledTimerWithTimeInterval:kFCAPIActivityTrackerCleanoutOperationTimerInterval block:^(NSTimer *timer) {
-        [weakSelf cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
+        [weakSelf cleanoutAPIActivityTrackerOnBackgroundThread];
     } repeats:YES];
     
     /* FOR DEBUGGING ONLY
     //[self testingClearAPITrackers];
     //[self testingPreloadAPITrackerWithSome:20 randomCallsFromBetweenStartHours:24 stopHoursAgo:0];
     */
+}
+
+-(NSOperationQueue *)apiActivityTrackingOpQueue;
+{
+    if (nil != _apiActivityTrackingOpQueue) {
+        return _apiActivityTrackingOpQueue;
+    }
+    
+    _apiActivityTrackingOpQueue = [[NSOperationQueue alloc] init];
+    _apiActivityTrackingOpQueue.underlyingQueue = dispatch_get_global_queue(QOS_CLASS_UTILITY, 0);
+    _apiActivityTrackingOpQueue.name = @"Weather API Activity Tracking Op Queue";
+    _apiActivityTrackingOpQueue.maxConcurrentOperationCount = 1;
+    
+    return _apiActivityTrackingOpQueue;
 }
 
 -(NSMutableSet *)apiActivityRecentAPICallDates;
@@ -235,24 +275,19 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     
     _apiActivityRecentAPICallDates = [NSMutableSet new];
     NSArray *existingCalls = [userDefaults objectForKey:kFCAPIActivityTrackerRecentAPICallDates];
-    if (nil != existingCalls) {
-        [_apiActivityRecentAPICallDates addObjectsFromArray:existingCalls];
+    
+    // Filter out any legacy v3.8.4 NSDate objects. We just want the NSDict objects
+    NSArray *filteredCalls = [existingCalls bk_select:^BOOL(id obj) {
+        if ([obj isKindOfClass:[NSDictionary class]]) {
+            return YES;
+        }
+        return NO;
+    }];
+    
+    if (nil != filteredCalls) {
+        [_apiActivityRecentAPICallDates addObjectsFromArray:filteredCalls];
     }
     return _apiActivityRecentAPICallDates;
-}
-
--(NSMutableSet *)apiActivityAPICallRejectedDates;
-{
-    if (nil != _apiActivityAPICallRejectedDates) {
-        return _apiActivityAPICallRejectedDates;
-    }
-    
-    _apiActivityAPICallRejectedDates = [NSMutableSet new];
-    NSArray *existingCalls = [userDefaults objectForKey:kFCAPIActivityTrackerAPICallRejectedDates];
-    if (nil != existingCalls) {
-        [_apiActivityAPICallRejectedDates addObjectsFromArray:existingCalls];
-    }
-    return _apiActivityAPICallRejectedDates;
 }
 
 -(void)updateAPIActivityTrackerWithAllowedCall:(BOOL)allowed forDate:(NSDate *)callDate;
@@ -260,18 +295,22 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     NSArray *arrayToUpdate = nil;
     NSString *setKey = nil;
     if (allowed) {
-        [self.apiActivityRecentAPICallDates addObject:callDate];
+        [self.apiActivityRecentAPICallDates addObject:@{kFCAPIRecentCallDateKey : callDate, kFCAPIRecentCallResultKey : @(WACR_APICallPermitted)}];
         arrayToUpdate = [NSArray arrayWithArray:[self.apiActivityRecentAPICallDates allObjects]];
         setKey = kFCAPIActivityTrackerRecentAPICallDates;
     }
     else {
-        [self.apiActivityAPICallRejectedDates addObject:callDate];
-        arrayToUpdate = [NSArray arrayWithArray:[self.apiActivityAPICallRejectedDates allObjects]];
-        setKey = kFCAPIActivityTrackerAPICallRejectedDates;
+        [self.apiActivityRecentAPICallDates addObject:@{kFCAPIRecentCallDateKey : callDate, kFCAPIRecentCallResultKey : @(WACR_APICallRejected)}];
+        arrayToUpdate = [NSArray arrayWithArray:[self.apiActivityRecentAPICallDates allObjects]];
+        setKey = kFCAPIActivityTrackerRecentAPICallDates;
         
     }
-    [self synchronizeToUserDefaultsForAPITrackingArray:arrayToUpdate forKey:setKey];
-    DDLogVerbose(@"Weather API %@ allow a call on %@",(allowed ? @"DID" : @"DID NOT"),callDate);
+    
+    __weak __typeof__(self) weakSelf = self;
+    [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
+        [weakSelf synchronizeToUserDefaultsForAPITrackingArray:arrayToUpdate forKey:setKey];
+    }];
+    DDLogVerbose(@"Weather API %@ allow a call on %@",(allowed ? @"DID" : @"DID NOT"),[self.forecastrDateFormatter stringFromDate:callDate]);
 }
 
 -(void)synchronizeToUserDefaultsForAPITrackingArray:(NSArray *)arrayToSync forKey:(NSString *)keyForSet;
@@ -285,7 +324,13 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 -(BOOL)checkIfOKToCallAPINow;
 {
     BOOL allowCall = NO;
-    if (kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod > [self.apiActivityRecentAPICallDates count]) {
+    NSUInteger permittedCount = [[self.apiActivityRecentAPICallDates bk_select:^BOOL(id obj) {
+        if ((WeatherAPICallResult)[[(NSDictionary *)obj objectForKey:kFCAPIRecentCallResultKey] intValue] == WACR_APICallPermitted) {
+            return YES;
+        }
+        return NO;
+    }] count];
+    if (kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod > permittedCount) {
         allowCall = YES;
     }
     
@@ -302,51 +347,70 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     return allowCall;
 }
 
+-(void)cleanoutAPIActivityTrackerOnBackgroundThread;
+{
+    __weak __typeof__(self) weakSelf = self;
+    [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
+        __typeof__(self) strongSelf = weakSelf;
+        [strongSelf cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
+    }];
+}
+
 -(void)cleanoutAPIActivityTrackerForCallsOlderThanHours:(NSInteger)hours;
 {
-    @synchronized (self.apiActivityRecentAPICallDates) {
+    NSMutableSet *copyOfRecentCallDates = [self.apiActivityRecentAPICallDates mutableCopy];
+    
+    int origCount = (int)[copyOfRecentCallDates count];
+    NSTimeInterval timeInterval = [[NSDate date] timeIntervalSinceReferenceDate] - ((60 * 60) * hours);
+    NSDate *checkDate = [NSDate dateWithTimeIntervalSinceReferenceDate:timeInterval];
+    
+    NSSet *callsToRemove = [copyOfRecentCallDates bk_select:^BOOL(id obj) {
         
-        int origCount = (int)[self.apiActivityRecentAPICallDates count];
-        NSTimeInterval timeInterval = [[NSDate date] timeIntervalSinceReferenceDate] - ((60 * 60) * hours);
-        NSDate *checkDate = [NSDate dateWithTimeIntervalSinceReferenceDate:timeInterval];
-        
-        NSSet *callsToRemove = [self.apiActivityRecentAPICallDates bk_select:^BOOL(id obj) {
-            //DDLogVerbose(@"Weather API Recent Call Date = %@",(NSDate *)obj);
-            if ([(NSDate *)obj laterDate:checkDate] == checkDate) {
-                return YES;
-            }
-            return NO;
-        }];
-        
-        for (NSDate *call in callsToRemove) {
-            [self.apiActivityRecentAPICallDates removeObject:call];
-            [self.apiActivityAPICallRejectedDates addObject:call];
+        // Include a check to remove legacy values from v3.8.4 where calls were stored as NSDate rather than NSDict
+        if ([obj isKindOfClass:[NSDate class]]) {
+            return YES;
         }
         
-        // Update the recent calls data
-        [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray arrayWithArray:[self.apiActivityRecentAPICallDates allObjects]] forKey:kFCAPIActivityTrackerRecentAPICallDates];
-        
-        // Update the rejected calls data
-        [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray arrayWithArray:[self.apiActivityAPICallRejectedDates allObjects]] forKey:kFCAPIActivityTrackerAPICallRejectedDates];
-        
-        int newCount = (int)[self.apiActivityRecentAPICallDates count];
-        DDLogVerbose(@"Weather API cleanout process removed %i calls from the collection. Orig: %i; New: %i",(origCount-newCount),origCount,newCount);
+        // Check call date stored in the dictionary obj
+        NSDate *callDate = (NSDate *)[(NSDictionary *)obj objectForKey:kFCAPIRecentCallDateKey];
+        if ([callDate laterDate:checkDate] == checkDate) {
+            return YES;
+        }
+        return NO;
+    }];
+    
+    for (id call in callsToRemove) {
+        [copyOfRecentCallDates removeObject:call];
     }
+    
+    // Update the recent calls data if there was a change
+    if (nil != callsToRemove && 0 < [callsToRemove count]) {
+        [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray arrayWithArray:[copyOfRecentCallDates allObjects]] forKey:kFCAPIActivityTrackerRecentAPICallDates];
+        
+        // Reset the ivar which will cause the property to reload from user defaults the next time its referenced
+        _apiActivityRecentAPICallDates = nil;
+    }
+    
+    int newCount = (int)[copyOfRecentCallDates count];
+    DDLogVerbose(@"Weather API cleanout process removed %i calls from the collection. Orig: %i; New: %i",(origCount-newCount),origCount,newCount);
 }
 
 -(void)informUserThatAPILimitsHaveBeenExceeded;
 {
-    NSString *title = NSLocalizedString(@"Weather API Call Requests Exceeded", @"Weather API Call Requests Exceeded");
-    NSString *message = [NSString stringWithFormat:@"You have exceeded the number of allowed API calls to Weather Data Service. The policy within Chronic Pain Tracker permits a maximum of %lu API calls per 24 hour period. Please wait 15-30 minutes and then try your request again.",(unsigned long)kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod];
-    
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"OK") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+    dispatch_async(dispatch_get_main_queue(), ^{
         
-    }];
-    [alertController addAction:okAction];
-    
-    UIViewController *activeVC = [UIApplication sharedApplication].keyWindow.rootViewController;
-    [activeVC presentViewController:alertController animated:YES completion:nil];
+        NSString *title = NSLocalizedString(@"Weather API Call Requests Exceeded", @"Weather API Call Requests Exceeded");
+        NSString *message = [NSString stringWithFormat:@"You have exceeded the number of allowed API calls to Weather Data Service. The policy within Chronic Pain Tracker permits a maximum of %lu API calls per 24 hour period. Please wait 15-30 minutes and then try your request again.",(unsigned long)kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod];
+        
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"OK") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            
+        }];
+        [alertController addAction:okAction];
+        
+        UIViewController *activeVC = [UIApplication sharedApplication].keyWindow.rootViewController;
+        [activeVC presentViewController:alertController animated:YES completion:nil];
+    });
 }
 
 -(void)testingPreloadAPITrackerWithSome:(NSInteger)callCount randomCallsFromBetweenStartHours:(NSInteger)startHours stopHoursAgo:(NSInteger)stopHours;
@@ -375,15 +439,58 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     
     DDLogVerbose(@"Weather API Testing is adding %lu random call dates to the recent call data (%lu existing calls). Earliest random call = %@; Latest random call = %@",(unsigned long)[randomCallDates count],(unsigned long)[self.apiActivityRecentAPICallDates count],earlyDate,lateDate);
     [self.apiActivityRecentAPICallDates addObjectsFromArray:[randomCallDates allObjects]];
-    [self cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
+    [self cleanoutAPIActivityTrackerOnBackgroundThread];
 }
 
--(void)testingClearAPITrackers;
+-(void)clearAPITrackeringCache;
 {
-    DDLogVerbose(@"Weather API Testing is clearing tracking sets. Recent calls (%lu)->0 ; Rejected Calls (%lu)->0",(unsigned long)[self.apiActivityRecentAPICallDates count],(unsigned long)[self.apiActivityAPICallRejectedDates count]);
-    [self.apiActivityRecentAPICallDates removeAllObjects];
-    [self.apiActivityAPICallRejectedDates removeAllObjects];
-    [self cleanoutAPIActivityTrackerForCallsOlderThanHours:24];
+    DDLogVerbose(@"Weather API Testing is clearing tracking sets. Total Recent calls (%lu)->0 ; Permitted Calls (%lu)->0; Rejected Calls (%lu)->0",(unsigned long)[self.apiActivityRecentAPICallDates count],(unsigned long)[self countOfRecentAPICallsWithResult:WACR_APICallPermitted],(unsigned long)[self countOfRecentAPICallsWithResult:WACR_APICallRejected]);
+    
+    // Update the recent calls data
+    [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray new] forKey:kFCAPIActivityTrackerRecentAPICallDates];
+    
+    // Reset the ivar which will cause the property to reload from user defaults the next time its referenced
+    _apiActivityRecentAPICallDates = nil;
+}
+
+-(NSInteger)countOfRecentAPICallsWithResult:(WeatherAPICallResult)callResult;
+{
+    NSUInteger callCount = [[self.apiActivityRecentAPICallDates bk_select:^BOOL(id obj) {
+        if ((WeatherAPICallResult)[[(NSDictionary *)obj objectForKey:kFCAPIRecentCallResultKey] intValue] == callResult) {
+            return YES;
+        }
+        return NO;
+    }] count];
+    return (NSInteger)callCount;
+}
+
+-(NSString *)messageForSettingsAlertViewRequestingAPICallTrackingCacheReset;
+{
+    // Count the permitted calls in the cache
+    NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(id  _Nonnull evaluatedObject, NSDictionary<NSString *,id> * _Nullable bindings) {
+        if ((WeatherAPICallResult)[[(NSDictionary *)evaluatedObject objectForKey:kFCAPIRecentCallResultKey] intValue] == WACR_APICallPermitted) {
+            return YES;
+        }
+        return NO;
+    }];
+    NSUInteger *permittedCalls = [[self.apiActivityRecentAPICallDates filteredSetUsingPredicate:predicate] count];
+    
+    return [NSString stringWithFormat:@"The Weather API tracking cache indicates %li api calls in the last 24 hours. This cache will refresh every 24 hours, but can be cleared manually using a code supplied by the CPT Support Staff. Do you wish to clear the cache using an override code?",(long)permittedCalls];
+}
+
+-(BOOL)allowAPICallTrackingCacheResetWithSecurityCode:(NSString *)securityCode;
+{
+    BOOL allowReset = NO;
+    if (nil != securityCode && 0 < [securityCode length]) {
+        if ([securityCode isEqualToString:kFCAPIRecentCallClearingCode]) {
+            allowReset = YES;
+            __weak __typeof__(self) weakSelf = self;
+            [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
+                [weakSelf clearAPITrackeringCache];
+            }];
+        }
+    }
+    return allowReset;
 }
 
 # pragma mark - Instance Methods
