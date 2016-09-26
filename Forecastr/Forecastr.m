@@ -473,7 +473,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         }
         return NO;
     }];
-    NSUInteger *permittedCalls = [[self.apiActivityRecentAPICallDates filteredSetUsingPredicate:predicate] count];
+    NSUInteger permittedCalls = [[self.apiActivityRecentAPICallDates filteredSetUsingPredicate:predicate] count];
     
     return [NSString stringWithFormat:@"The Weather API tracking cache indicates %li api calls in the last 24 hours. This cache will refresh every 24 hours, but can be cleared manually using a code supplied by the CPT Support Staff. Do you wish to clear the cache using an override code?",(long)permittedCalls];
 }
