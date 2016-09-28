@@ -247,10 +247,9 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         [weakSelf cleanoutAPIActivityTrackerOnBackgroundThread];
     } repeats:YES];
     
-    /* FOR DEBUGGING ONLY
+    //* FOR DEBUGGING ONLY *//
     //[self testingClearAPITrackers];
     //[self testingPreloadAPITrackerWithSome:20 randomCallsFromBetweenStartHours:24 stopHoursAgo:0];
-    */
 }
 
 -(NSOperationQueue *)apiActivityTrackingOpQueue;
@@ -260,7 +259,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     }
     
     _apiActivityTrackingOpQueue = [[NSOperationQueue alloc] init];
-    _apiActivityTrackingOpQueue.underlyingQueue = dispatch_get_global_queue(QOS_CLASS_UTILITY, 0);
+    _apiActivityTrackingOpQueue.underlyingQueue = dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0);
     _apiActivityTrackingOpQueue.name = @"Weather API Activity Tracking Op Queue";
     _apiActivityTrackingOpQueue.maxConcurrentOperationCount = 1;
     
@@ -273,7 +272,15 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         return _apiActivityRecentAPICallDates;
     }
     
-    _apiActivityRecentAPICallDates = [NSMutableSet new];
+    @synchronized (_apiActivityRecentAPICallDates) {
+        _apiActivityRecentAPICallDates = [self reloadAPIActivityRecentAPICallDates];
+    }
+    return _apiActivityRecentAPICallDates;
+}
+
+-(NSMutableSet *)reloadAPIActivityRecentAPICallDates;
+{
+    NSMutableSet *newRecentAPICallDateSet = [NSMutableSet new];
     NSArray *existingCalls = [userDefaults objectForKey:kFCAPIActivityTrackerRecentAPICallDates];
     
     // Filter out any legacy v3.8.4 NSDate objects. We just want the NSDict objects
@@ -285,25 +292,23 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     }];
     
     if (nil != filteredCalls) {
-        [_apiActivityRecentAPICallDates addObjectsFromArray:filteredCalls];
+        [newRecentAPICallDateSet addObjectsFromArray:filteredCalls];
     }
-    return _apiActivityRecentAPICallDates;
+    return newRecentAPICallDateSet;
 }
 
 -(void)updateAPIActivityTrackerWithAllowedCall:(BOOL)allowed forDate:(NSDate *)callDate;
 {
-    NSArray *arrayToUpdate = nil;
+    NSSet *initialSet = self.apiActivityRecentAPICallDates ? [self.apiActivityRecentAPICallDates copy] : [NSSet new];
+    NSMutableArray *arrayToUpdate = [[NSMutableArray alloc] initWithArray:[initialSet allObjects]];
     NSString *setKey = nil;
     if (allowed) {
-        [self.apiActivityRecentAPICallDates addObject:@{kFCAPIRecentCallDateKey : callDate, kFCAPIRecentCallResultKey : @(WACR_APICallPermitted)}];
-        arrayToUpdate = [NSArray arrayWithArray:[self.apiActivityRecentAPICallDates allObjects]];
+        [arrayToUpdate addObject:@{kFCAPIRecentCallDateKey : callDate, kFCAPIRecentCallResultKey : @(WACR_APICallPermitted)}];
         setKey = kFCAPIActivityTrackerRecentAPICallDates;
     }
     else {
-        [self.apiActivityRecentAPICallDates addObject:@{kFCAPIRecentCallDateKey : callDate, kFCAPIRecentCallResultKey : @(WACR_APICallRejected)}];
-        arrayToUpdate = [NSArray arrayWithArray:[self.apiActivityRecentAPICallDates allObjects]];
+        [arrayToUpdate addObject:@{kFCAPIRecentCallDateKey : callDate, kFCAPIRecentCallResultKey : @(WACR_APICallRejected)}];
         setKey = kFCAPIActivityTrackerRecentAPICallDates;
-        
     }
     
     __weak __typeof__(self) weakSelf = self;
@@ -318,6 +323,9 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     if (nil != arrayToSync && nil != keyForSet) {
         [userDefaults setObject:arrayToSync forKey:keyForSet];
         [userDefaults synchronize];
+        @synchronized (_apiActivityRecentAPICallDates) {
+            _apiActivityRecentAPICallDates = [self reloadAPIActivityRecentAPICallDates];
+        }
     }
 }
 
@@ -335,9 +343,9 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     }
     
     __weak __typeof__(self) weakSelf = self;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+    [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
         [weakSelf updateAPIActivityTrackerWithAllowedCall:allowCall forDate:[NSDate date]];
-    });
+    }];
     
     if (!allowCall) {
         // Notify user that API is temporarily locked
@@ -385,8 +393,13 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     
     // Update the recent calls data if there was a change
     if (nil != callsToRemove && 0 < [callsToRemove count]) {
-        [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray arrayWithArray:[copyOfRecentCallDates allObjects]] forKey:kFCAPIActivityTrackerRecentAPICallDates];
         
+        NSArray *arrayToUpdate = [NSArray arrayWithArray:[copyOfRecentCallDates allObjects]];
+        __weak __typeof__(self) weakSelf = self;
+        [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
+            [weakSelf synchronizeToUserDefaultsForAPITrackingArray:arrayToUpdate forKey:kFCAPIActivityTrackerRecentAPICallDates];
+        }];
+
         // Reset the ivar which will cause the property to reload from user defaults the next time its referenced
         _apiActivityRecentAPICallDates = nil;
     }
@@ -444,7 +457,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 
 -(void)clearAPITrackeringCache;
 {
-    DDLogVerbose(@"Weather API Testing is clearing tracking sets. Total Recent calls (%lu)->0 ; Permitted Calls (%lu)->0; Rejected Calls (%lu)->0",(unsigned long)[self.apiActivityRecentAPICallDates count],(unsigned long)[self countOfRecentAPICallsWithResult:WACR_APICallPermitted],(unsigned long)[self countOfRecentAPICallsWithResult:WACR_APICallRejected]);
+    DDLogVerbose(@"Weather API Testing is clearing tracking data. Pre-reset Counts => Total Recent calls (%lu)->0 ; Permitted Calls (%lu)->0; Rejected Calls (%lu)->0",(unsigned long)[self.apiActivityRecentAPICallDates count],(unsigned long)[self countOfRecentAPICallsWithResult:WACR_APICallPermitted],(unsigned long)[self countOfRecentAPICallsWithResult:WACR_APICallRejected]);
     
     // Update the recent calls data
     [self synchronizeToUserDefaultsForAPITrackingArray:[NSArray new] forKey:kFCAPIActivityTrackerRecentAPICallDates];
