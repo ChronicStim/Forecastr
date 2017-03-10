@@ -332,12 +332,13 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 -(BOOL)checkIfOKToCallAPINow;
 {
     BOOL allowCall = NO;
-    NSUInteger permittedCount = [[self.apiActivityRecentAPICallDates bk_select:^BOOL(id obj) {
+    NSUInteger __block permittedCount = 0;
+    [[self.apiActivityRecentAPICallDates allObjects] enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if ((WeatherAPICallResult)[[(NSDictionary *)obj objectForKey:kFCAPIRecentCallResultKey] intValue] == WACR_APICallPermitted) {
-            return YES;
+            permittedCount++;
         }
-        return NO;
-    }] count];
+    }];
+    
     if (kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod > permittedCount) {
         allowCall = YES;
     }
