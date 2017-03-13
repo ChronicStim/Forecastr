@@ -165,7 +165,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     NSTimer *_apiActivityTrackerTimer;
     
 }
-@property (nonatomic, strong) NSMutableSet *apiActivityRecentAPICallDates;
+@property (nonatomic, strong) NSMutableArray *apiActivityRecentAPICallDates;
 @property (nonatomic, strong) NSOperationQueue *apiActivityTrackingOpQueue;
 @property (nonatomic, strong) NSDateFormatter *forecastrDateFormatter;
 
@@ -266,7 +266,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     return _apiActivityTrackingOpQueue;
 }
 
--(NSMutableSet *)apiActivityRecentAPICallDates;
+-(NSMutableArray *)apiActivityRecentAPICallDates;
 {
     if (nil != _apiActivityRecentAPICallDates) {
         return _apiActivityRecentAPICallDates;
@@ -278,9 +278,9 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     return _apiActivityRecentAPICallDates;
 }
 
--(NSMutableSet *)reloadAPIActivityRecentAPICallDates;
+-(NSMutableArray *)reloadAPIActivityRecentAPICallDates;
 {
-    NSMutableSet *newRecentAPICallDateSet = [NSMutableSet new];
+    NSMutableArray *newRecentAPICallDateArray = [NSMutableArray new];
     NSArray *existingCalls = [userDefaults objectForKey:kFCAPIActivityTrackerRecentAPICallDates];
     
     // Filter out any legacy v3.8.4 NSDate objects. We just want the NSDict objects
@@ -292,15 +292,14 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     }];
     
     if (nil != filteredCalls) {
-        [newRecentAPICallDateSet addObjectsFromArray:filteredCalls];
+        [newRecentAPICallDateArray addObjectsFromArray:filteredCalls];
     }
-    return newRecentAPICallDateSet;
+    return newRecentAPICallDateArray;
 }
 
 -(void)updateAPIActivityTrackerWithAllowedCall:(BOOL)allowed forDate:(NSDate *)callDate;
 {
-    NSSet *initialSet = self.apiActivityRecentAPICallDates ? [self.apiActivityRecentAPICallDates copy] : [NSSet new];
-    NSMutableArray *arrayToUpdate = [[NSMutableArray alloc] initWithArray:[initialSet allObjects]];
+    NSMutableArray *arrayToUpdate = self.apiActivityRecentAPICallDates ? [self.apiActivityRecentAPICallDates mutableCopy] : [NSMutableArray new];
     NSString *setKey = nil;
     if (allowed) {
         [arrayToUpdate addObject:@{kFCAPIRecentCallDateKey : callDate, kFCAPIRecentCallResultKey : @(WACR_APICallPermitted)}];
@@ -314,7 +313,11 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     __weak __typeof__(self) weakSelf = self;
     [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
         [weakSelf synchronizeToUserDefaultsForAPITrackingArray:arrayToUpdate forKey:setKey];
+
+        // Reset the ivar which will cause the property to reload from user defaults the next time its referenced
+        _apiActivityRecentAPICallDates = nil;
     }];
+    
     DDLogVerbose(@"Weather API %@ allow a call on %@",(allowed ? @"DID" : @"DID NOT"),[self.forecastrDateFormatter stringFromDate:callDate]);
 }
 
@@ -323,9 +326,6 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     if (nil != arrayToSync && nil != keyForSet) {
         [userDefaults setObject:arrayToSync forKey:keyForSet];
         [userDefaults synchronize];
-        @synchronized (_apiActivityRecentAPICallDates) {
-            _apiActivityRecentAPICallDates = [self reloadAPIActivityRecentAPICallDates];
-        }
     }
 }
 
@@ -333,7 +333,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 {
     BOOL allowCall = NO;
     NSUInteger __block permittedCount = 0;
-    [[self.apiActivityRecentAPICallDates allObjects] enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [self.apiActivityRecentAPICallDates enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if ((WeatherAPICallResult)[[(NSDictionary *)obj objectForKey:kFCAPIRecentCallResultKey] intValue] == WACR_APICallPermitted) {
             permittedCount++;
         }
@@ -487,7 +487,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         }
         return NO;
     }];
-    NSUInteger permittedCalls = [[self.apiActivityRecentAPICallDates filteredSetUsingPredicate:predicate] count];
+    NSUInteger permittedCalls = [[self.apiActivityRecentAPICallDates filteredArrayUsingPredicate:predicate] count];
     
     return [NSString stringWithFormat:@"The Weather API tracking cache indicates %li api calls in the last 24 hours. This cache will refresh every 24 hours, but can be cleared manually using a code supplied by the CPT Support Staff. Do you wish to clear the cache using an override code?",(long)permittedCalls];
 }
