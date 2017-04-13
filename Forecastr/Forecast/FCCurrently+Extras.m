@@ -270,21 +270,19 @@
 
 -(NSArray *)getArrayOfHourlyPressureDataPoints;
 {
-    NSMutableArray __block *dataPointArray = [NSMutableArray new];
+    NSMutableArray *dataPointArray = [NSMutableArray new];
     
     if (self.forecast && self.forecast.hourlyForecasts) {
         
         NSDate *currentForecastDate = [self.fcCurrentlyDate copy];
-        [self.forecast.hourlyForecasts enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        for (FCHourly *hourlyForecast in self.forecast.hourlyForecasts) {
             
-            FCHourly *hourlyForecast = (FCHourly *)obj;
             NSInteger conditionHour = (NSInteger)floor([hourlyForecast.fcHourlyDate timeIntervalSinceDate:currentForecastDate]/3600.0f);
-            
             FCMeasurementPressure *pressure = [hourlyForecast.pressure copy];
             NSDictionary *pressureDataPointDict = @{kFCCurrentlyPressureDataPointHourlyDate : hourlyForecast.fcHourlyDate,kFCCurrentlyPressureDataPointHourIndex : [NSNumber numberWithInteger:conditionHour],kFCCurrentlyPressureDataPointABSHourIndex : [NSNumber numberWithInteger:abs((int)conditionHour)],kFCCurrentlyPressureDataPointPressure : pressure};
             
             [dataPointArray addObject:pressureDataPointDict];
-        }];
+        }
     }
     
     return [NSArray arrayWithArray:dataPointArray];
