@@ -8,7 +8,7 @@
 
 #import "FCForecastModel.h"
 
-typedef void (^FCForecastLocationCompletionHandler)();
+typedef void (^FCForecastLocationCompletionHandler)(void);
 
 @class FCForecast;
 @interface FCForecastLocation : FCForecastModel
