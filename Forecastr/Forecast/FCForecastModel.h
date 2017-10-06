@@ -14,7 +14,7 @@
 #import "FCMeasurementPressure.h"
 #import "FCMeasurementPrecipIntensity.h"
 #import "FCMeasurementPrecipAccumulation.h"
-#import "EasyMapping.h"
+#import <EasyMapping/EasyMapping.h>
 #import <CoreLocation/CoreLocation.h>
 
 @interface FCForecastModel : NSObject <EKMappingProtocol>

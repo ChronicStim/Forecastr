@@ -7,7 +7,7 @@
 //
 
 #import "FCForecastModel.h"
-#import "EasyMapping.h"
+#import <EasyMapping/EasyMapping.h>
 
 @class FCFlags, FCCurrently, FCForecastLocation, FCDaily;
 @interface FCForecast : FCForecastModel <EKMappingProtocol>
