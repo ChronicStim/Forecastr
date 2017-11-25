@@ -719,7 +719,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 #endif
                                 cachedItemWasFound = YES;
                                 // Cache item is still fresh
-                                dispatch_sync(dispatch_get_main_queue(), ^{
+                                runOnMainQueueWithoutDeadlocking(^{
                                     success([cacheItem objectForKey:kFCCacheForecastKey]);
                                 });
                                 
@@ -731,7 +731,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
                 }
                 if (!cachedItemWasFound) {
                     // If we don't have anything fresh in the cache
-                    dispatch_sync(dispatch_get_main_queue(), ^{
+                    runOnMainQueueWithoutDeadlocking(^{
                         failure([NSError errorWithDomain:kFCErrorDomain code:kFCCachedItemNotFound userInfo:nil]);
                     });
                 }
@@ -740,7 +740,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 #ifndef NDEBUG
                 NSLog(@"Forecastr: Caught an exception while reading from cache (%@)", exception);
 #endif
-                dispatch_sync(dispatch_get_main_queue(), ^{
+                runOnMainQueueWithoutDeadlocking(^{
                     failure([NSError errorWithDomain:kFCErrorDomain code:kFCCachedItemNotFound userInfo:nil]);
                 });
             }
