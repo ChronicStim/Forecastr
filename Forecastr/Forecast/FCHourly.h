@@ -7,7 +7,7 @@
 //
 
 #import "FCForecastModel.h"
-#import "EasyMapping.h"
+#import <EasyMapping/EasyMapping.h>
 
 @class FCForecast, FCMeasurementTemperature, FCMeasurementWindSpeed, FCMeasurementDistance, FCMeasurementPressure, FCMeasurementPrecipIntensity, FCMeasurementPrecipAccumulation;
 @interface FCHourly : FCForecastModel <EKMappingProtocol>

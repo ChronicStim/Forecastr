@@ -7,7 +7,7 @@
 //
 
 #import "FCForecastModel.h"
-#import "EasyMapping.h"
+#import <EasyMapping/EasyMapping.h>
 #import "Forecastr.h"
 
 @class FCForecast;

@@ -260,14 +260,6 @@ extern NSString *const kFCNearestStormBearing;
 - (NSString *)imageNameForWeatherIconType:(NSString *)iconDescription;
 
 /**
- * Returns a string with the JSON error message, if given, or the appropriate localized description for the NSError object
- *
- * @param error The NSError object given in the failure block of the request
- * @param response The JSON or AFHTTPRequestOperation (for JSONP only) object given in the failure block of the request
- */
-- (NSString *)messageForError:(NSError *)error withResponse:(id)response;
-
-/**
  * Checks the NSUserDefaults for a cached forecast that is still fresh
  * This will save us round trips and usage for the Forecast.io servers
  * self.cacheEnabled is YES by default, but you can disable it for testing or if you don't want to use it

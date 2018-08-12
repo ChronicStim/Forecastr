@@ -24,7 +24,7 @@
 // THE SOFTWARE.
 
 #import "Forecastr.h"
-#import "AFNetworking.h"
+#import <AFNetworking/AFNetworking.h>
 #import "ForecastrAPIClient.h"
 
 // Error domain & enums
@@ -655,22 +655,6 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     else if ([iconDescription isEqualToString:kFCIconTornado]) { return @"tornado.png"; }
     else if ([iconDescription isEqualToString:kFCIconHurricane]) { return @"hurricane.png"; }
     else return @"cloudy.png"; // Default in case nothing matched
-}
-
-// Returns a string with the JSON error message, if given, or the appropriate localized description for the NSError object
-- (NSString *)messageForError:(NSError *)error withResponse:(id)response
-{
-    if ([response isKindOfClass:[NSDictionary class]]) {
-        NSString *errorMsg = [response objectForKey:@"error"];
-        return (errorMsg.length) ? errorMsg : error.localizedDescription;
-    } else if ([response isKindOfClass:[AFHTTPRequestOperation class]]) {
-        AFHTTPRequestOperation *operation = (AFHTTPRequestOperation *)response;
-        NSInteger statusCode = operation.response.statusCode;
-        NSString *errorMsg = [NSHTTPURLResponse localizedStringForStatusCode:statusCode];
-        return [errorMsg stringByAppendingFormat:@" (code %ld)", (long)statusCode];
-    } else {
-        return error.localizedDescription;
-    }
 }
 
 # pragma mark - Private Methods
