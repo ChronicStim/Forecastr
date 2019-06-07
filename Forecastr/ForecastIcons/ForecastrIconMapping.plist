@@ -93,5 +93,12 @@
 		<key>nighttimeIconFilename</key>
 		<string>clear_night</string>
 	</dict>
+	<key>tornado</key>
+	<dict>
+		<key>daytimeIconFilename</key>
+		<string>tornado</string>
+		<key>nighttimeIconFilename</key>
+		<string>tornado</string>
+	</dict>
 </dict>
 </plist>
