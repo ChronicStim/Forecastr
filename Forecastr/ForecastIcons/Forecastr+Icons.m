@@ -7,7 +7,6 @@
 //
 
 #import "Forecastr+Icons.h"
-#import "UIImage+ForecastrAdditions.h"
 #import "FCForecastModel.h"
 
 @implementation Forecastr (Icons)
