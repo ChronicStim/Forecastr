@@ -417,6 +417,8 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         NSString *message = [NSString stringWithFormat:@"You have exceeded the number of allowed API calls to Weather Data Service. The policy within Chronic Pain Tracker permits a maximum of %lu API calls per 24 hour period. Please wait 15-30 minutes and then try your request again.",(unsigned long)kFCAPIActivityTrackerMaxAPICallsPer24HourPeriod];
         
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+        [alertController.view setAlpha:kCPTAlertControllerDefaultAlpha];
+
         UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"OK") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
             
         }];
