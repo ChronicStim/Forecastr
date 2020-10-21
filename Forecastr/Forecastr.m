@@ -312,10 +312,11 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     
     __weak __typeof__(self) weakSelf = self;
     [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
-        [weakSelf synchronizeToUserDefaultsForAPITrackingArray:arrayToUpdate forKey:setKey];
+        __typeof__(self) strongSelf = weakSelf;
+        [strongSelf synchronizeToUserDefaultsForAPITrackingArray:arrayToUpdate forKey:setKey];
 
         // Reset the ivar which will cause the property to reload from user defaults the next time its referenced
-        _apiActivityRecentAPICallDates = nil;
+        strongSelf->_apiActivityRecentAPICallDates = nil;
     }];
     
     DDLogVerbose(@"Weather API %@ allow a call on %@",(allowed ? @"DID" : @"DID NOT"),[self.forecastrDateFormatter stringFromDate:callDate]);
