@@ -344,6 +344,11 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         allowCall = YES;
     }
     
+#ifndef NDEBUG
+    allowCall = YES;
+    NSLog(@"Forecastr is bypassing API maxAPICallsPer24Hrs during Debug phase. Recent call count = %li",(long)permittedCount);
+#endif
+    
     __weak __typeof__(self) weakSelf = self;
     [self.apiActivityTrackingOpQueue addOperationWithBlock:^{
         [weakSelf updateAPIActivityTrackerWithAllowedCall:allowCall forDate:[NSDate date]];
