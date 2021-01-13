@@ -272,7 +272,7 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
         return _apiActivityRecentAPICallDates;
     }
     
-    @synchronized (_apiActivityRecentAPICallDates) {
+    @synchronized (_apiActivityRecentAPICallDates ? : self) {
         _apiActivityRecentAPICallDates = [self reloadAPIActivityRecentAPICallDates];
     }
     return _apiActivityRecentAPICallDates;
@@ -345,7 +345,9 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     }
     
 #ifndef NDEBUG
-    allowCall = YES;
+    if (!allowCall) {
+        allowCall = YES;
+    }
     NSLog(@"Forecastr is bypassing API maxAPICallsPer24Hrs during Debug phase. Recent call count = %li",(long)permittedCount);
 #endif
     
@@ -679,10 +681,10 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 - (NSString *)urlStringforLatitude:(double)lat longitude:(double)lon time:(NSNumber *)time exclusions:(NSArray *)exclusions extend:(NSString *)extendCommand language:(NSString *)languageCode
 {
     NSString *urlString = [NSString stringWithFormat:@"%@/%.6f,%.6f", self.apiKey, lat, lon];
-    if (time) urlString = [urlString stringByAppendingFormat:@",%.0f", [time doubleValue]];
-    if (exclusions) urlString = [urlString stringByAppendingFormat:@"?exclude=%@", [self stringForExclusions:exclusions]];
-    if (extendCommand) urlString = [urlString stringByAppendingFormat:@"%@extend=%@", exclusions ? @"&" : @"?", extendCommand];
-    if (languageCode) urlString = [urlString stringByAppendingFormat:@"%@lang=%@", (exclusions || extendCommand) ? @"&" : @"?", languageCode];
+    if (nil != time) urlString = [urlString stringByAppendingFormat:@",%.0f", [time doubleValue]];
+    if (nil != exclusions) urlString = [urlString stringByAppendingFormat:@"?exclude=%@", [self stringForExclusions:exclusions]];
+    if (nil != extendCommand) urlString = [urlString stringByAppendingFormat:@"%@extend=%@", exclusions ? @"&" : @"?", extendCommand];
+    if (nil != languageCode) urlString = [urlString stringByAppendingFormat:@"%@lang=%@", (exclusions || extendCommand) ? @"&" : @"?", languageCode];
     if (self.units) urlString = [urlString stringByAppendingFormat:@"%@units=%@", (exclusions || extendCommand || languageCode) ? @"&" : @"?", self.units];
     if (self.callback) urlString = [urlString stringByAppendingFormat:@"%@callback=%@", (exclusions || self.units || extendCommand || languageCode) ? @"&" : @"?", self.callback];
     return urlString;
