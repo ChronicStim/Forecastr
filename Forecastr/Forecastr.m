@@ -583,32 +583,31 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
             if (callback) {
                 
                 if (strongSelf.requestHTTPCompression) {
-                    [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
+//                    [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
                     [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
                 }
-                [ForecastrAPIClient sharedClient].responseSerializer = [AFHTTPResponseSerializer serializer];
+//                [ForecastrAPIClient sharedClient].responseSerializer = [AFHTTPResponseSerializer serializer];
                 [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil headers:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
                     __typeof__(self) strongSelf = weakSelf;
                     NSString *JSONP = [[NSString alloc] initWithData:responseObject encoding:NSASCIIStringEncoding];
                     if (strongSelf.cacheEnabled) [strongSelf cacheForecast:JSONP withURLString:cacheKey];
-                    [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
+//                    [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
                     success(JSONP);
                 } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
                     NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
-                    [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
+//                    [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
                     failure(error, response);
                 }];
                 
             } else {
                 if (strongSelf.requestHTTPCompression) {
-                    [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
+//                    [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
                     [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
                 }
                 [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil headers:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
                     __typeof__(self) strongSelf = weakSelf;
-                    NSString *JSONP = [[NSString alloc] initWithData:responseObject encoding:NSASCIIStringEncoding];
-                    if (strongSelf.cacheEnabled) [strongSelf cacheForecast:JSONP withURLString:cacheKey];
-                    success(JSONP);
+                    if (strongSelf.cacheEnabled) [strongSelf cacheForecast:responseObject withURLString:cacheKey];
+                    success(responseObject);
                 } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
                     NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
                     failure(error, response);
