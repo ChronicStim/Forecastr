@@ -568,25 +568,29 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     // Check if we have a valid cache item that hasn't expired for this URL
     // If caching isn't enabled or a fresh cache item wasn't found, it will execute a server request in the failure block
     NSString *cacheKey = [self cacheKeyForURLString:urlString forLatitude:lat longitude:lon];
+
+    __weak __typeof__(self) weakSelf = self;
     [self checkForecastCacheForURLString:cacheKey success:^(id cachedForecast) {
         success(cachedForecast);
     } failure:^(NSError *error) {
+        __typeof__(self) strongSelf = weakSelf;
         // If we got here, cache isn't enabled or we didn't find a valid/unexpired forecast
         // for this location in cache so let's query the servers for one
         
         // Check if user has exceeded the number of API calls allowed before proceeding
-        if (!_trackAPIActivity || [self checkIfOKToCallAPINow]) {
+        if (!strongSelf->_trackAPIActivity || [strongSelf checkIfOKToCallAPINow]) {
             // Asynchronously kick off the GET request on the API for the generated URL (i.e. not the one used as a cache key)
             if (callback) {
                 
-                if (self.requestHTTPCompression) {
+                if (strongSelf.requestHTTPCompression) {
                     [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
                     [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
                 }
                 [ForecastrAPIClient sharedClient].responseSerializer = [AFHTTPResponseSerializer serializer];
                 [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+                    __typeof__(self) strongSelf = weakSelf;
                     NSString *JSONP = [[NSString alloc] initWithData:responseObject encoding:NSASCIIStringEncoding];
-                    if (self.cacheEnabled) [self cacheForecast:JSONP withURLString:cacheKey];
+                    if (strongSelf.cacheEnabled) [strongSelf cacheForecast:JSONP withURLString:cacheKey];
                     [ForecastrAPIClient sharedClient].responseSerializer = [AFJSONResponseSerializer serializer];
                     success(JSONP);
                 } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -596,12 +600,13 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
                 }];
                 
             } else {
-                if (self.requestHTTPCompression) {
+                if (strongSelf.requestHTTPCompression) {
                     [ForecastrAPIClient sharedClient].requestSerializer = [AFHTTPRequestSerializer serializer];
                     [(AFHTTPRequestSerializer *)[ForecastrAPIClient sharedClient].requestSerializer setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
                 }
                 [[ForecastrAPIClient sharedClient] GET:urlString parameters:nil success:^(NSURLSessionDataTask *task, id JSON) {
-                    if (self.cacheEnabled) [self cacheForecast:JSON withURLString:cacheKey];
+                    __typeof__(self) strongSelf = weakSelf;
+                    if (strongSelf.cacheEnabled) [strongSelf cacheForecast:JSON withURLString:cacheKey];
                     success(JSON);
                 } failure:^(NSURLSessionDataTask *task, NSError *error) {
                     NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
@@ -710,16 +715,18 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
     if (self.cacheEnabled) {
         
         //  Perform this on a background thread
+        __weak __typeof__(self) weakSelf = self;
         dispatch_async(async_queue, ^{
+            __typeof__(self) strongSelf = weakSelf;
             BOOL cachedItemWasFound = NO;
             @try {
-                NSDictionary *cachedForecasts = [userDefaults dictionaryForKey:kFCCacheKey];
+                NSDictionary *cachedForecasts = [strongSelf->userDefaults dictionaryForKey:kFCCacheKey];
                 if (cachedForecasts) {
                     // Create an NSString object from the coordinates as the dictionary key
                     NSData *archivedCacheItem = [cachedForecasts objectForKey:urlString];
                     // Check if the forecast exists and hasn't expired yet
                     if (archivedCacheItem) {
-                        NSDictionary *cacheItem = [self objectForArchive:archivedCacheItem];
+                        NSDictionary *cacheItem = [strongSelf objectForArchive:archivedCacheItem];
                         if (cacheItem) {
                             NSDate *expirationTime = (NSDate *)[cacheItem objectForKey:kFCCacheExpiresKey];
                             NSDate *rightNow = [NSDate date];
@@ -769,20 +776,22 @@ NSTimeInterval const kFCAPIActivityTrackerCleanoutOperationTimerInterval = 300; 
 #endif
     
     // Save to cache on a background thread
+    __weak __typeof__(self) weakSelf = self;
     dispatch_async(async_queue, ^{
-        NSMutableDictionary *cachedForecasts = [[userDefaults dictionaryForKey:kFCCacheKey] mutableCopy];
+        __typeof__(self) strongSelf = weakSelf;
+        NSMutableDictionary *cachedForecasts = [[strongSelf->userDefaults dictionaryForKey:kFCCacheKey] mutableCopy];
         if (!cachedForecasts) cachedForecasts = [[NSMutableDictionary alloc] initWithCapacity:1];
         
         // Set up the new dictionary we are going to cache
-        NSDate *expirationDate = [[NSDate date] dateByAddingTimeInterval:self.cacheExpirationInMinutes * 60]; // X minutes from now
+        NSDate *expirationDate = [[NSDate date] dateByAddingTimeInterval:strongSelf.cacheExpirationInMinutes * 60]; // X minutes from now
         NSMutableDictionary *newCacheItem = [[NSMutableDictionary alloc] initWithCapacity:2];
         [newCacheItem setObject:expirationDate forKey:kFCCacheExpiresKey];
         [newCacheItem setObject:forecast forKey:kFCCacheForecastKey];
         
         // Save the new cache item and sync the user defaults
-        [cachedForecasts setObject:[self archivedObject:newCacheItem] forKey:urlString];
-        [userDefaults setObject:cachedForecasts forKey:kFCCacheKey];
-        [userDefaults synchronize];
+        [cachedForecasts setObject:[strongSelf archivedObject:newCacheItem] forKey:urlString];
+        [strongSelf->userDefaults setObject:cachedForecasts forKey:kFCCacheKey];
+        [strongSelf->userDefaults synchronize];
     });
 }
 
