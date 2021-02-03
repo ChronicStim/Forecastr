@@ -41,5 +41,6 @@
 @property (nonatomic, strong) NSNumber* windBearing;
 @property (nonatomic, strong) FCMeasurementWindSpeed* windSpeed;
 @property (nonatomic, weak) FCForecast *forecast;
+@property (nonatomic, strong) NSNumber *uvIndex;
 
 @end

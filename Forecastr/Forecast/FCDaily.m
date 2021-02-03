@@ -25,6 +25,7 @@
                                                @"precipType" : @"precipType",
                                                @"summary" : @"dailySummary",
                                                @"windBearing" : @"windBearing",
+                                               @"uvIndex" : @"uvIndex"
                                                }];
         
         [mapping mapKeyPath:@"time" toProperty:@"fcDailyDate" withValueBlock:^id(NSString *key, id value) {
